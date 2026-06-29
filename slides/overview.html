@@ -74,7 +74,7 @@
     </figure>
     <ul>
       <li>In inflammatory bowel disease, pathologists read each biopsy as <b class="active">active</b>
-          (neutrophils attacking the gut lining) vs <b class="healed">healed</b>. It guides treatment — but it's manual and subjective.</li>
+          (neutrophils in the gut lining) vs <b class="healed">healed</b>. It guides treatment — but it's manual and subjective.</li>
       <li>The hard part: one slide holds <b>thousands of cells</b>, disease is often a <b>small focus</b> in
           otherwise-normal tissue, and the only training labels we have are <b>per-slide</b>, not per-region.</li>
       <li><b>Goal:</b> an automatic, per-region <b class="active">inflamed</b>-vs-<b class="healed">healed</b> heatmap — plus an honest accuracy number.</li>
@@ -84,7 +84,7 @@
   <!-- ===== 2. APPROACH ===== -->
   <section class="slide">
     <div class="kicker">The Approach</div>
-    <h2>Stand on a frozen “foundation model”, train only a tiny head</h2>
+    <h2>Use a frozen “foundation model”, train only a tiny head</h2>
     <div class="belt">
       <span class="step">🖼️ whole-slide image</span><span class="arrow">→</span>
       <span class="step">▦ cut into tiles</span><span class="arrow">→</span>
@@ -97,7 +97,7 @@
       <li>A <b>foundation model</b> is a large AI pre-trained on a huge pile of pathology images; it already
           “understands” tissue. We use it <b>frozen</b> — pure look-up, <b>no expensive training</b>.</li>
       <li>On top we train a <b>tiny head</b> that does two things at once: call the slide
-          <b class="active">active</b>/<b class="healed">healed</b>, and <b>spotlight the tiles</b> that drove that call → the heatmap.</li>
+          <b class="active">active</b>/<b class="healed">healed</b>, and <b>highlight the tiles</b> that drove that call → the heatmap.</li>
       <li>It learns from <b>slide-level labels only</b> (no one marks individual tiles), and we score it
           <b>leave-patients-out</b> — a patient's slides never sit on both sides of the test, so the number is honest.</li>
     </ul>
@@ -105,7 +105,7 @@
 
   <!-- ===== 3. RESULT — SIGNAL IS REAL ===== -->
   <section class="slide">
-    <div class="kicker">Result 1 · The signal is real</div>
+    <div class="kicker">Result 1 · Separating active from healed</div>
     <h2>It separates active from healed — <b class="active">AUROC 0.98</b>, no leakage</h2>
     <figure>
       <img class="shot" src="images/baseline_evidence.png" alt="PCA scatter, prediction histogram, and ROC curve">
@@ -123,12 +123,12 @@
     <h2>A per-tile <b class="active">inflamed</b>-vs-<b class="healed">healed</b> map — from slide labels alone</h2>
     <figure>
       <img class="shot" src="images/mil_active_vs_calm.png" alt="Heatmap of an active slide with one hot-spot beside a calm slide with none">
-      <figcaption>Colour = how hard the model looked at each tile. <b class="active">Active</b> slide (left) → one red hot-spot; <b class="healed">healed</b> slide (right) → none.</figcaption>
+      <figcaption>Colour = how much attention the model gave each tile. <b class="active">Active</b> slide (left) → one red hot-spot; <b class="healed">healed</b> slide (right) → none.</figcaption>
     </figure>
     <ul>
       <li>The model was <b>never told which tiles</b> are diseased — only the slide's overall label. Yet it learns
-          to put a bright <b class="active">spotlight</b> on the inflamed region and stay cool on a healed slide.</li>
-      <li>That spotlight is the deliverable: a <b>map a clinician can check</b> — “the call came from <i>here</i>.”</li>
+          to put a <b class="active">spotlight</b> on the inflamed region and stay low on a healed slide.</li>
+      <li>That map is the deliverable: a <b>map a clinician can check</b> — “the call came from <i>here</i>.”</li>
     </ul>
   </section>
 
@@ -142,7 +142,7 @@
     </figure>
     <ul>
       <li>Most active slides are <b>broadly inflamed</b> and easy. The rare <b class="active">focal</b> cases — one tiny
-          inflamed spot — are <b>still missed</b>. We <b>report this honestly</b> rather than hide it.</li>
+          inflamed spot — are <b>still missed</b>. We <b>report this</b> rather than leave it out.</li>
       <li><b>Next:</b> finalize the validation, then add cell-level neutrophil detection and formal severity scores
           (Geboes / Nancy / Robarts) — each a new head on the <b>same</b> frozen embeddings.</li>
     </ul>

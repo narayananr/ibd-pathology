@@ -111,7 +111,7 @@
     <h1>IBD H&amp;E:<br>Inflamed vs Healed</h1>
     <p class="sub">A region map of active inflammation on colon biopsies —<br>
        built on a <b>frozen</b> pathology foundation model, one small step at a time.</p>
-    <p class="muted" style="margin-top:2em">Started 2026-06-28 · this deck grows as we go.</p>
+    <p class="muted" style="margin-top:2em">Started 2026-06-28 · updated as the project progresses.</p>
   </section>
 
   <!-- ===== 2. THE CHALLENGE ===== -->
@@ -132,7 +132,7 @@
   <!-- ===== 3. OUR APPROACH ===== -->
   <section class="slide">
     <div class="kicker">Our Approach</div>
-    <h2>A conveyor belt — and we only own the small end</h2>
+    <h2>A pipeline of stages — we build only one of them</h2>
     <div class="belt">
       <span class="step">🧫 Whole slide</span><span class="arrow">→</span>
       <span class="step">✂️ Tile it<br><span class="muted">TRIDENT</span></span><span class="arrow">→</span>
@@ -141,7 +141,7 @@
       <span class="step">🗺️ Stitch heatmap</span>
     </div>
     <ul>
-      <li><b>The encoder is frozen.</b> A model pretrained on millions of pathology images turns each tile into a list of numbers (an "embedding"). We never retrain it — the heavy lifting is done.</li>
+      <li><b>The encoder is frozen.</b> A model pretrained on millions of pathology images turns each tile into a list of numbers (an "embedding"). We never retrain it — the pretraining is already done.</li>
       <li><b>We train only the small head</b> that reads those numbers and scores inflamed vs healed.</li>
       <li><b>v1 = the smallest useful slice:</b> embeddings → light head → heatmap → honest validation. Fancier scoring comes later, on the <i>same</i> embeddings.</li>
     </ul>
@@ -251,7 +251,7 @@
           <tr><td>In the crypt <i>wall</i></td><td>cryptitis</td></tr>
           <tr><td>In the crypt <i>centre</i></td><td><b class="active">crypt abscess</b></td></tr>
         </table>
-        <div class="callout"><b>Our loudest signal &amp; sanity check:</b> if the model can't light up on tiles like this, nothing downstream works.</div>
+        <div class="callout"><b>Our strongest signal &amp; sanity check:</b> if the model can't light up on tiles like this, nothing downstream works.</div>
       </div>
     </div>
   </section>
@@ -277,7 +277,7 @@
 
   <!-- ===== 9. KEY MODELING INSIGHT ===== -->
   <section class="slide">
-    <div class="kicker">The Insight That Shapes Everything</div>
+    <div class="kicker">Key Modeling Insight</div>
     <h2>Focal disease → we can't trust slide→tile labels</h2>
     <ul>
       <li>An "active" slide is mostly <b class="healed">calm</b> tissue with a <b class="active">few</b> guilty spots.</li>
@@ -308,7 +308,7 @@
       <li><b>Step 6 — honest validation</b>: consolidate leave-patients-out metrics (CI, sensitivity/specificity, confusion, head-vs-head agreement). ⬅️ <b>next</b></li>
       <li>Then (deferred): cell/neutrophil detection, stain norm, Geboes / Nancy / Robarts scoring — all on the <b>same</b> frozen embeddings.</li>
     </ul>
-    <p class="muted" style="margin-top:1.4em">This logbook keeps growing — new slides get appended as we build each piece.</p>
+    <p class="muted" style="margin-top:1.4em">New slides are appended as we build each piece.</p>
   </section>
 
   <!-- ===== 11. END-TO-END JOURNEY ===== -->
@@ -317,7 +317,7 @@
     <h2>From one giant slide to a trustworthy map</h2>
     <p><b>Input:</b> ONE giant slide <span class="muted">(1–4&nbsp;GB)</span> + ONE word —
        <b class="active">active</b> or <b class="healed">inactive</b>. <b>Output:</b> a red/blue
-       map + an honest number. Here is the whole bridge between them:</p>
+       map + an honest number. Here is the full pipeline between them:</p>
     <div class="belt">
       <span class="step">🧫 Whole slide<br><span class="muted">+ one word</span></span><span class="arrow">→</span>
       <span class="step">✂️ Tile<br><span class="muted">TRIDENT</span></span><span class="arrow">→</span>
@@ -421,15 +421,15 @@
           huge pile of H&amp;E slides <b>self-supervised</b> (no labels). It already "knows" what tissue, crypts,
           nuclei and inflammation look like — that knowledge is baked into its weights.</li>
       <li><b>How we use it: <span class="active">frozen</span>.</b> Each tile goes in, one 1,536-number embedding
-          comes out — pure <b>inference, no training</b>. We never touch its weights. Compute once, cache forever
+          comes out — pure <b>inference, no training</b>. We never touch its weights. Compute once, cache it.
           (our 6,322 tiles took ~42 min on the Mac GPU).</li>
-      <li><b>Why that's the whole bet:</b> the expensive pre-training already did the hard visual learning, so we
+      <li><b>Why this works:</b> the expensive pre-training already did the hard visual learning, so we
           only train <b>tiny heads</b> (logistic regression, attention-MIL) on top. That's why this fits on a laptop.</li>
       <li><b>Swappable:</b> H-optimus-0 (open, Apache-2.0) today; <code>H0-mini</code> / <code>UNI2</code> /
           <code>Virchow2</code> drop into the same slot — we'd choose by a probe on held-out <b>IBD</b> slides, not oncology leaderboards.</li>
     </ul>
     <div class="callout">🧩 <b>Frozen encoder + light heads = the core architecture decision.</b> Every later upgrade
-      (cell detection, Geboes / Nancy / Robarts scoring) is just <b>another head on these same embeddings</b> — the brain never changes.</div>
+      (cell detection, Geboes / Nancy / Robarts scoring) is just <b>another head on these same embeddings</b> — the encoder never changes.</div>
   </section>
 
   <!-- ===== 15. EMBEDDINGS + SIGNAL CHECK ===== -->
@@ -443,7 +443,7 @@
     <div class="callout">
       <b>We didn't trust 0.98 blindly:</b> shuffling the labels collapses AUROC to <b>0.52</b> (no leak);
       tile-count alone explains only <b>0.66</b>; the best single embedding dimension already hits
-      <b>0.87</b> → the active/healed signal is genuinely, richly encoded in the frozen features.
+      <b>0.87</b> → the active/healed signal is encoded in the frozen features.
     </div>
     <p class="muted">This is <i>whether</i> a slide is active (slide-level). The <i>where</i> — the heatmap — is Step 5 (attention-MIL).</p>
   </section>
@@ -471,8 +471,8 @@
     </figure>
     <p>One <b class="active">hot focus</b> in mostly-<b class="healed">normal</b> mucosa. The hot tiles are
        dense &amp; disordered; the cool tiles are orderly crypt rings. The mean-pool baseline <b>missed</b> this
-       slide (averaged the focus away). Attention-MIL was <i>meant</i> to catch exactly this — but honestly it
-       <b>doesn't yet</b>: <code>17_HE</code> stays missed by MIL too (see the “disease is a spectrum” slide). Genuinely focal disease is
+       slide (averaged the focus away). Attention-MIL was <i>meant</i> to catch exactly this — but it
+       <b>doesn't yet</b>: <code>17_HE</code> stays missed by MIL too (see the “disease is a spectrum” slide). Focal disease is
        the hard, open case.</p>
   </section>
 
@@ -484,7 +484,7 @@
       <img class="shot" src="images/errors_grid.png" alt="The 9 misclassified slides">
       <figcaption>The 9 out-of-fold disagreements, reconstructed from their tiles.</figcaption>
     </figure>
-    <p><b>3 active→called inactive</b> = genuinely focal disease (the hard cases — attention-MIL doesn't fully
+    <p><b>3 active→called inactive</b> = focal disease (the hard cases — attention-MIL doesn't fully
        fix these either; see the spectrum slide). <b>6 inactive→called active</b> = dense/chronic tissue or tiny biopsies,
        where "abnormal" ≠ "neutrophils." A full clickable review of all 140 (thumbnail → per-tile zoom) lives at
        <code>artifacts/review/index.html</code>.</p>
@@ -504,7 +504,7 @@
     <ul>
       <li>Each slide is a <b>bag</b> of its tile embeddings + <b>one</b> label — no per-tile labels.</li>
       <li>A tiny network learns an <b>attention weight aᵢ</b> for each tile (how much it counts; the weights sum to 1), pools the tiles into one slide vector by <b>weighted average</b>, then classifies it.</li>
-      <li>Trained on <b>slide labels only</b> — but to call an <b class="active">active</b> slide active it <i>must</i> put weight on the inflamed tiles. So the learned attention <b>is the heatmap</b> (the <i>where</i>), for free.</li>
+      <li>Trained on <b>slide labels only</b> — but to call an <b class="active">active</b> slide active it <i>must</i> put weight on the inflamed tiles. So the learned attention <b>is the heatmap</b> (the <i>where</i>).</li>
       <li><b>vs the alternatives:</b> mean-pool weights every tile equally (dilutes the focus — it missed <code>17_HE</code>); max-pool uses only the single top tile (brittle — fooled by one benign dense tile). Attention is the learned middle.</li>
     </ul>
     <div class="callout">⚠️ <b>The <code>132_HE</code> test:</b> max-pool would fixate on one dense-but-benign tile (lymphoid, muscle). Does <i>gated</i> attention avoid that trap? We check it on the next slide — validated <b>leave-patients-out</b> vs the 0.98 baseline.</div>
@@ -513,7 +513,7 @@
   <!-- ===== 20. ATTENTION-MIL RESULT — THE HEATMAP IS REAL ===== -->
   <section class="slide media">
     <div class="kicker">Step 5 · Result</div>
-    <h2>The heatmap is real — and it points at the inflammation</h2>
+    <h2>The heatmap points at the inflammation</h2>
     <figure>
       <img class="shot" src="images/mil_active_vs_calm.png" alt="Side-by-side attention heatmaps: an active slide with one red hot-spot vs a calm slide with none">
       <figcaption><b>Colour = how hard the model looked at each tile</b> (legend at right; tile's attention vs its

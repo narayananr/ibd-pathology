@@ -2,7 +2,7 @@
 
 The labels were derived once from the IBDColEpi annotation filenames
 (`ID-{id}_HE_{active|inactive}.tiff`) and committed to `metadata/slide_labels.csv`
-(see PROGRESS.md / project memory for provenance). This module is the single place the rest
+(see `REFERENCES.md` for dataset provenance). This module is the single place the rest
 of the pipeline reads them.
 """
 from __future__ import annotations

@@ -3,8 +3,7 @@
 > Plain-language walkthrough of *the approach*, start to finish — from a raw slide sitting on
 > a scanner to the final coloured map and an honest accuracy number. Written 2026-06-28 as the
 > companion narrative to the slide deck (`slides/index.html`, Slides 11–12) and the per-slide
-> deep-dive (`slides/NOTES.md`). Project rules live in `CLAUDE.md`; the ordered to-do in
-> `BUILD_PLAN.md`; "where are we right now" in `PROGRESS.md`.
+> deep-dive (`slides/NOTES.md`).
 >
 > **How to read this:** every term is defined the first time it appears. One example slide,
 > `107_HE`, is carried through the whole thing so it stays concrete.
@@ -17,14 +16,14 @@ and *healed* tissue stays cool — plus a trustworthy number for "how often is t
 ## Stage 0 — What we start with, and the one label we have
 
 A **whole-slide image (WSI)** is the biopsy scanned at microscope resolution. It is *gigapixel* —
-like a photo billions of pixels wide, 1–4 GB on disk. No model can swallow that whole; it is far
+like a photo billions of pixels wide, 1–4 GB on disk. No model can process the whole image at once; it is
 too big.
 
 The **only label** attached to `107_HE` is **one word**: `active` or `inactive`. "Active" means a
 pathologist found neutrophils (immune cells) invading the gut lining *somewhere* on the slide.
 That is it — one word for the entire slide.
 
-> ⚠️ **The "label gap"** is *only* about this one word. The dataset already decided active-vs-inactive
+> **The "label gap"** is *only* about this one word. The dataset already decided active-vs-inactive
 > years ago; it just stored the word inside the WSI **filename** (`ID-X_Y.ndpi`). The pre-tiled patch
 > files we downloaded kept only `107_HE` and dropped the word. So "closing the gap" = a spreadsheet
 > lookup to recover one word per slide. **No tiles, no drawing, no annotation.**
@@ -48,7 +47,7 @@ Because the slide is too big, we chop it into thousands of small squares called 
    back in the right spots).
 3. (Stage 2) hand each tile to the foundation model.
 
-We use TRIDENT instead of writing our own tiler because WSIs are a minefield of formats and
+We use TRIDENT instead of writing our own tiler because WSIs come in many formats and
 coordinate systems, and it lets us swap foundation models with one flag.
 
 **After Stage 1:** `107_HE` = ~1,000 little images, each tagged with where it sits on the slide.
@@ -82,7 +81,7 @@ are solved by tools; from here on is the small part we own.
 The actual question: given ~1,000 tile-embeddings and one word, how do we score the tiles? We build
 up slowly.
 
-> 🔑 **Two kinds of label — keep them straight:**
+> **Two kinds of label — keep them straight:**
 > - **Slide label** — one word per slide (`active`/`inactive`). **The only label we ever need.**
 > - **Tile label** — saying which *individual* tiles are inflamed. **We never make these by hand.**
 >
@@ -98,7 +97,7 @@ Feed those to **logistic regression** — the simplest classifier; it learns a w
 separates "active" vectors from "inactive" ones and outputs a probability.
 
 We score it with **AUROC** (Area Under the ROC Curve): one number from 0.5 (useless coin-flip) to
-1.0 (perfect) for how well the two classes separate. If AUROC is **≳ 0.70**, the embeddings genuinely
+1.0 (perfect) for how well the two classes separate. If AUROC is **≳ 0.70**, the embeddings
 carry the inflammation signal and we proceed. If it is near 0.5, something upstream is broken and we
 fix *that* first.
 
@@ -112,11 +111,11 @@ and learns a **weight** for each one — *how much this tile should count toward
 Then it takes a **weighted** vote: suspicious tiles count a lot, boring calm tiles count ~zero.
 
 It trains on **only the one word per slide** — no tile labels, ever. The trick: the only way the
-model can correctly call a focal slide `active` is to learn to put its weight on the few genuinely
+model can correctly call a focal slide `active` is to learn to put its weight on the few
 inflamed tiles. So it *teaches itself* which tiles matter.
 
-The payoff: **those learned weights are the map.** The tiles the model leaned on are exactly the
-inflamed spots — localization for free, from slide-level labels only.
+**Those learned weights are the map.** The tiles the model leaned on are exactly the
+inflamed spots — localization from slide-level labels only.
 
 > **Analogy.** Imagine a box of 1,000 photos, and you are told only *"this box contains at least one
 > fire-drill photo"* — but **not** which ones. Attention-MIL is a method that, from just that
@@ -125,7 +124,7 @@ inflamed spots — localization for free, from slide-level labels only.
 > matches the data's own definition — "active if ≥1 spot is inflamed" — which is precisely what MIL is
 > built for. We sanity-check our numbers against Owkin's published **IMILIA** on this same dataset.
 
-### Step 3c — QuPath polygons (optional, last, take-it-or-leave-it)
+### Step 3c — QuPath polygons (optional, last)
 
 *Optionally*, on a handful of slides, you hand-draw a few "this region is inflamed / this one is
 healed" outlines in **QuPath** (a slide-viewer). That gives a small set of *clean, human-verified*
@@ -143,7 +142,7 @@ thumbnail.
 
 Result: quiet tissue tints cool, inflamed hotspots glow red. A pathologist can glance at it and
 check the model is firing on *real* cryptitis/abscesses — not on folds, blur, or slide edges. That
-trust is the entire point.
+check is the point of the heatmap.
 
 ---
 
@@ -156,8 +155,8 @@ validation:
   on one side.** Train on the training slides, test on slides the model has *never seen*.
 - **Why never split by tile:** two tiles from the same slide are near-twins (same patient, stain,
   scanner). If twins land on both sides of the split, the model "recognizes" rather than
-  "understands," and the score is fake-high. Splitting by slide is non-negotiable — it is the
-  difference between an honest number and a lie.
+  "understands," and the score is fake-high. Splitting by slide is required; otherwise the score is
+  not trustworthy.
 - Report **AUROC** plus **agreement** (e.g. *kappa* — how often the model and a pathologist agree,
   beyond chance), and write down *where it fails* (focal disease it missed, artifacts it tripped on).
 
@@ -195,4 +194,4 @@ cheap, and CPU-friendly.
     "label gap").
   - **Step 3 onward:** embed → mean-pool check → attention-MIL → heatmap → validation.
 
-We are at the very start of the conveyor belt, and we climb it one short script at a time.
+We are just starting, and we build the pipeline one short script at a time.

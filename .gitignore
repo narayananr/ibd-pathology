@@ -18,3 +18,8 @@ trident_processed/
 # --- OS / editor ---
 .DS_Store
 .vscode/
+
+# --- internal working docs (kept local, not published) ---
+CLAUDE.md
+PROGRESS.md
+BUILD_PLAN.md

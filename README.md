@@ -1,14 +1,14 @@
 # IBD H&E — Inflamed vs Healed
 
 > A computational-pathology prototype that turns an H&E whole-slide image of a colon biopsy into a
-> per-region **inflamed-vs-healed** heatmap, with honest, leakage-aware validation — built entirely on a
+> per-region **inflamed-vs-healed** heatmap, with leakage-aware validation — built entirely on a
 > **frozen** pathology foundation model (no encoder training) on **public** data.
 
 > ⚠️ **Research & learning prototype. Not a medical device, not validated for clinical use.**
 
 ![Attention heatmap: an active slide lights up one inflamed focus; a healed slide stays cool](slides/images/mil_active_vs_calm.png)
 
-*Left: an **active** slide — the model spotlights the one inflamed region. Right: a **healed** slide — nothing
+*Left: an **active** slide — the model highlights the one inflamed region. Right: a **healed** slide — nothing
 lights up. The model was trained on slide-level labels only; nobody marked individual tiles.*
 
 ---
@@ -20,7 +20,7 @@ Inflammatory bowel disease (Crohn's, ulcerative colitis) biopsies are graded by 
 project predicts that call per slide **and** produces a per-tile heatmap of *where* the inflammation is, so a
 human can check the evidence.
 
-## Results (honest)
+## Results
 
 Evaluated **leave-patients-out** (a patient's slides never straddle the train/test split) on 140 H&E slides:
 
@@ -30,7 +30,7 @@ Evaluated **leave-patients-out** (a patient's slides never straddle the train/te
 | Gated attention-MIL (Step 5) | **0.976** | a per-tile **heatmap** — the *where* |
 
 - **No leakage:** shuffling the labels collapses AUROC to **0.52**.
-- **Honest limitation:** the MIL head does **not** beat the baseline on the number, and **focal disease** (a
+- **Limitation:** the MIL head does **not** beat the baseline on the number, and **focal disease** (a
   tiny inflamed spot in otherwise-normal tissue) is **missed by both heads**. The heatmap, not a higher score,
   is the deliverable. See the deck's "disease is a spectrum" slide.
 
@@ -42,7 +42,7 @@ whole-slide image → tiles → [ frozen H-optimus-0, 1.1B-param ViT ] → 1,536
 ```
 
 One **frozen** pathology foundation model encodes tiles into embeddings; every model on top is a *light head*
-trained on the cached embeddings. The heavy lifting is pretrained — so the trainable parts are tiny and run on
+trained on the cached embeddings. The pretraining is done up front — so the trainable parts are tiny and run on
 a laptop GPU.
 
 ## Repository layout
@@ -55,7 +55,7 @@ metadata/         slide_labels.csv — curated slide→active/inactive labels (d
 slides/           index.html (full build log) · overview.html (5-slide summary) · NOTES.md · images/
 artifacts/        generated tables, embeddings, figures, galleries  (git-ignored)
 data/             you download the dataset here                       (git-ignored)
-REFERENCES.md     citations & attribution    ·    PROGRESS.md  resume/status    ·    APPROACH.md  plain-language walkthrough
+REFERENCES.md     citations & attribution    ·    APPROACH.md  plain-language walkthrough
 ```
 
 ## Setup

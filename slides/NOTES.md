@@ -3,7 +3,7 @@
 This is the long-form companion to the slide deck (`slides/index.html`). Each section
 below maps **1:1 to a slide** and explains it in more depth than fits on the slide — the
 biology, the engineering, and *why* we made each choice. Read the slide for the gist; read
-here to actually understand it.
+here for the full explanation.
 
 > **Maintenance:** whenever we add a slide to `index.html`, we add a matching `## Slide N`
 > section here. The deck and these notes stay in lockstep — together they are the project's
@@ -60,7 +60,7 @@ choice on the next slides is a response to one of these.
 
 ---
 
-## Slide 3 — Our Approach (the conveyor belt)
+## Slide 3 — Our Approach
 
 **What it is:** the end-to-end pipeline, and which part is *ours*.
 
@@ -98,7 +98,7 @@ empty space; (2) **tiles/patches** the tissue into a regular grid (our recipe: 2
 running every tile through a chosen foundation model. Output per slide: one `.h5` file with
 `features` (N×D: N tiles, each a D-number vector) and `coords` (N×2, tile positions), plus a
 thumbnail and a tissue-contour GeoJSON. We use it instead of hand-rolled OpenSlide tiling
-because WSIs are a minefield (magnification levels, coordinate systems, `.ndpi` format,
+because WSIs are tricky to handle (magnification levels, coordinate systems, `.ndpi` format,
 tissue detection) and TRIDENT also lets us swap encoders with one flag.
 
 **The foundation model, concretely.** A large Vision Transformer pretrained (self-supervised,
@@ -302,12 +302,12 @@ The **input** is deliberately tiny: **one giant slide** (a gigapixel `.ndpi`, 1�
 5. **Validate (we build).** Test on slides the model has never seen, **grouped by slide**, and report
    AUROC + agreement.
 
-**Why it's split this way.** Stages 1–2 are an off-the-shelf, one-time cost — the heavy lifting is
+**Why it's split this way.** Stages 1–2 are an off-the-shelf, one-time cost — the pretraining is
 already done and the embeddings are cached. We *own* only Stages 3–5, which are small, cheap, and run
 comfortably on CPU. That is the entire "smallest useful slice" philosophy in one picture.
 
 **Takeaway:** off-the-shelf tools carry the slide all the way to numbers; we own only the small,
-cheap scoring → mapping → validation end, and we climb it one short script at a time.
+cheap scoring → mapping → validation end, and we build it one script at a time.
 
 ---
 
@@ -377,7 +377,7 @@ gap" Step 2 closes.
 |---|---|---|---|
 | Trainset | 4,973 | 104 | training WSIs |
 | Validationset | 154 | 80 (a subset of the 104 train slides) | a random **3% of the *training tiles*** |
-| Testset | 1,195 | 36 | genuinely held-out WSIs |
+| Testset | 1,195 | 36 | fully held-out WSIs |
 | **Total (distinct)** | **6,322** | **140** | = 104 train + 36 test |
 
 **The crucial structure — and why we don't reuse their split for validation.** The authors first
@@ -452,13 +452,13 @@ updated. Embeddings are cached to disk keyed by (slide, encoder, mag, patch) and
 we pay the ~42-min compute **once** (Step 3). This is the literal meaning of the project's "no encoder
 training" rule.
 
-**Why it's the whole bet.** The costly pre-training did the hard visual representation learning, so each
+**Why this is the core dependency.** The costly pre-training did the hard visual representation learning, so each
 of our heads is tiny (logistic regression in Step 4, a small attention-MIL in Step 5) and trains in
 seconds on a laptop GPU. **Swappable** by design: `H0-mini` / `UNI2` / `Virchow2` fit the same slot —
-choose by a linear probe on held-out **IBD** slides, not oncology leaderboards (per CLAUDE.md).
+choose by a linear probe on held-out **IBD** slides, not oncology leaderboards.
 
 **Why a dedicated slide (added later).** The deck jumped from labels straight to "embeddings computed";
-a reader needs to know *what* did the embedding and what "frozen" means before the AUROC lands. This slide
+a reader needs to know *what* did the embedding and what "frozen" means before the AUROC is presented. This slide
 fills that gap and states the **core architecture decision** explicitly: frozen encoder + light heads,
 every future upgrade = another head on the same embeddings.
 
@@ -483,13 +483,13 @@ logistic regression (class-weighted for the 54/86 imbalance), evaluate **leave-p
 `artifacts/baseline_oof_predictions.csv`.
 
 **We didn't trust 0.98 blindly — three adversarial checks:**
-- **Permutation test:** shuffle the labels → AUROC collapses to **0.52** (chance). The model genuinely
+- **Permutation test:** shuffle the labels → AUROC collapses to **0.52** (chance). The model
   needs the real labels → no pipeline leak or bug.
 - **Tile-count confound:** active slides are slightly bigger (52 vs 41 tiles/slide), and tile-count
   *alone* gives AUROC 0.66 — a mild confound, but nowhere near 0.98, so the embeddings carry real
   morphology beyond mere size.
 - **Single-feature ceiling:** the best individual embedding dimension already separates at 0.87 — the
-  signal is richly, near-linearly encoded in the frozen features.
+  signal is near-linearly encoded in the frozen features.
 
 **Caveat / what's next.** This is **slide-level** ("whether"), and mean-pooling gives **no map**. The
 actual deliverable — *where* the inflammation is — is Step 5 (attention-MIL), which keeps tiles
@@ -511,7 +511,7 @@ honest). The signal is unambiguous; now we localize it.
   0.07); only 4 slides land in the 0.3–0.7 uncertain band.
 - **ROC (right):** sharp elbow, AUROC 0.984. With the permutation test collapsing to 0.52, this is honest.
 
-**Takeaway:** the high AUROC reflects a genuinely clean, bimodal separation — not a lucky threshold.
+**Takeaway:** the high AUROC reflects a clean, bimodal separation — not a lucky threshold.
 
 ---
 
@@ -565,7 +565,7 @@ limitation (dense ≠ active).
 
 **What it is:** the method behind the actual deliverable (the heatmap). NB the original hope — that it
 would *beat* the mean-pool baseline on focal slides — **did not pan out** (it doesn't; see Slides 20/22).
-The real win is localization, not a better score.
+The benefit is localization, not a better score.
 
 **The setup.** Each slide = a **bag** of its tile embeddings (N × 1,536) + **one** label
 (active/inactive). We have no per-tile labels. (This is "multiple-instance learning": the bag is
@@ -582,7 +582,7 @@ embeddings** — the encoder is never touched, so the trainable part is tiny and
 
 **Why the attention map = the heatmap.** To correctly call a focal active slide "active," the model is
 *forced* to concentrate `aᵢ` on the few inflamed tiles — there's no other way to push `z` toward the
-active region. So painting each tile by its `aᵢ` gives the inflamed/healed map, as a free by-product of
+active region. So painting each tile by its `aᵢ` gives the inflamed/healed map, as a by-product of
 getting the slide call right.
 
 **vs the pooling alternatives.**
@@ -613,8 +613,8 @@ the heavy env (`.venv-embed`), one bag at a time, class-weighted BCE, Adam, leav
 **The numbers (leave-patients-out, 140 slides).**
 - **AUROC 0.976** · κ 0.83 · accuracy 92% · per-fold AUROC `[1.0, 1.0, 0.967, 0.988, 0.953]`.
 - vs the Step-4 baseline **0.984** → **96% call agreement**. Be honest: MIL is a **hair *below*** the
-  baseline, not above, and it **misses more active slides (6 vs 3)** — including the genuinely focal ones.
-  So the classification is **not** improved. **The entire payoff is the *where*** — a real per-tile heatmap
+  baseline, not above, and it **misses more active slides (6 vs 3)** — including the focal ones.
+  So the classification is **not** improved. **The benefit is the *where*** — a real per-tile heatmap
   the mean-pool baseline simply cannot produce.
 
 **Reading the heatmap.** Colour = each tile's attention as a multiple of its **fair (uniform) share**
@@ -630,11 +630,10 @@ extended 3-panel version that also shows the `132_HE` trap.
 - **`144_HE` (clean inactive, P≈0):** no tile exceeds ~2× fair share → uniformly pale. Honest contrast:
   an inactive slide should *not* light up.
 - **`132_HE` (the Step-4 trap, P≈0):** gated attention **spread out** (max 3× fair share) — it did **not**
-  fixate on the dense-but-benign tile that the naive linear localizer scored 0.81. The sigmoid gate earns
-  its keep here: it can *suppress* a tile that merely looks busy.
+  fixate on the dense-but-benign tile that the naive linear localizer scored 0.81. The sigmoid gate helps here: it can *suppress* a tile that merely looks busy.
 
 **Important honesty note (the big one).** MIL **does not rescue focal disease** — it's *worse* there.
-Active slides missed: **baseline** {105, 17, 64} (3); **MIL** {105, 15, 1, 17, 64, 83} (6). The genuinely
+Active slides missed: **baseline** {105, 17, 64} (3); **MIL** {105, 15, 1, 17, 64, 83} (6). The
 focal `17_HE` (11% inflamed) and `105_HE` (47%) stay missed by both. This is exactly why we did **not**
 use `17_HE` as the demo, and why the headline is `137_HE` (a slide MIL got right). The honest one-liner:
 **MIL buys the heatmap, not better accuracy.** Full extent picture on Slide 22.
@@ -655,7 +654,7 @@ pulled straight from the slide and viewed at tile resolution:
 
 **Why this matters.** The model was trained on the **slide** label only — it was never told which tiles
 contain disease. Yet its attention concentrated on exactly the eroded, infiltrated region. That is the
-whole thesis of the project working end-to-end: *slide-level supervision → tile-level localization*, on
+core idea of the project working end-to-end: *slide-level supervision → tile-level localization*, on
 frozen foundation-model embeddings, with no per-tile annotation.
 
 **Caveat on the claim.** At this magnification we can describe "dense infiltrate + erosion" confidently;
