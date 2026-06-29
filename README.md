@@ -20,6 +20,33 @@ Inflammatory bowel disease (Crohn's, ulcerative colitis) biopsies are graded by 
 project predicts that call per slide **and** produces a per-tile heatmap of *where* the inflammation is, so a
 human can check the evidence.
 
+## The two approaches, in plain English
+
+We only know whether a **whole slide** is "active" or "healed" — but the disease can hide in a tiny patch.
+So the puzzle is: *given one label for the whole slide, how do you decide, and how do you find where?*
+
+**Analogy:** a slide is a **basket of fruit** (each tile = one piece of fruit). You're told only whether the
+basket *"contains a rotten piece"* (active) or *"is all fresh"* (healed) — never **which** piece.
+
+**Approach 1 — Mean-pool baseline → blend it into a smoothie.**
+Throw every piece in a blender, taste the smoothie, decide. Simple and fast. But one rotten apple among
+fifty fresh ones barely changes the taste — a small bad patch gets **diluted** — and the smoothie can't tell
+you *which* piece was rotten.
+*In code:* average all the tile "fingerprints" into one vector, then logistic regression. Good headline
+number, but **no map**.
+
+**Approach 2 — Attention-MIL → a taster who weighs each piece.**
+Instead of blending, a taster checks each piece and learns how much to **weigh** it: a suspicious piece
+counts a lot, a boring fresh one counts almost nothing. The weighted opinion decides the basket — and those
+weights **point straight at the rotten piece**.
+*In code:* a small "attention" network learns a weight per tile from slide labels alone; the weights then
+become the **heatmap** (the *where*).
+
+**What we found:** on this data both score about the same (AUROC **0.984** vs **0.976**) — the smoothie is
+already good enough to *call* the slide. Attention-MIL's real value is the **map**: it highlights the region
+that drove the call, which a pathologist can check. (Honestly, neither reliably catches the *very* focal
+cases yet — see [Limitations](#limitations).)
+
 ## Results
 
 Evaluated **leave-patients-out** (a patient's slides never straddle the train/test split) on 140 H&E slides:

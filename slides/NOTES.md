@@ -694,6 +694,24 @@ per-tile supervision) for a later iteration.
 
 ---
 
+## Slide 22B — Step 6: honest validation
+
+What it shows (`artifacts/validation_report.png` + `validation_report.md`, from `scripts/06_validate.py`):
+the leave-patients-out story for **both** heads, computed from their saved out-of-fold predictions (no new
+model).
+- **AUROC + 95% CI** (patient bootstrap, n=2000): baseline **0.984** (0.96–1.00), MIL **0.976** (0.95–0.99).
+  Resampling whole *patients* keeps the interval honest about how few independent cases there are (139).
+- **Confusion @0.5:** baseline sens 94% / spec 93% (FN 3); MIL sens 89% / spec 94% (FN 6) — MIL trades a
+  little sensitivity for the heatmap.
+- **Leakage check (the important one):** shuffle the labels and re-run the baseline CV → AUROC collapses to
+  ~**0.46** (chance) over 25 shuffles. The 0.98 needs the real labels, so the pipeline isn't memorizing/leaking.
+- **Head agreement:** 96%.
+
+Helpers in `src/ibdpath/validate.py` (`bootstrap_auroc_ci`, `classification_metrics`, `call_agreement`);
+`tests/test_validate.py` (5). This is a reporting step — it does not change any model.
+
+---
+
 ## Slide 23 — Summary & what's next (v1 recap)
 
 The honest one-slide close. Four cards: **(1) What we built** — one frozen FM (H-optimus-0) → embeddings
@@ -703,9 +721,9 @@ leak). **(3) Deliverable** — a per-tile inflamed-vs-healed heatmap learned fro
 What we did NOT solve** — focal disease (`17_HE`, `105_HE`) missed by both heads (MIL misses more, 6 vs 3);
 "abnormal ≠ neutrophils" false positives; cell-level confirmation deferred.
 
-**Next:** Step 6 = consolidate the honest validation (CI, sensitivity/specificity, confusion, head-vs-head
-agreement). Then the **deferred** upgrades (cell/neutrophil detection, stain norm, Geboes/Nancy/Robarts
-scoring) — each a new head on the **same** frozen embeddings, per the core architecture decision.
+**Next:** Step 6 is **done** (validation locked in — Slide 22B). What remains are the **deferred** upgrades
+(cell/neutrophil detection, stain norm, Geboes/Nancy/Robarts scoring) — each a new head on the **same**
+frozen embeddings, per the core architecture decision.
 
 ---
 

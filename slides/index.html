@@ -302,11 +302,11 @@
       <li><b>Step 3 done</b> — embedded all 6,322 tiles with frozen H-optimus-0 on the Mac GPU (MPS) → cached.</li>
       <li><b>Step 4 done</b> — baseline: <b class="active">AUROC 0.98</b> (leave-patients-out), verified no leakage.</li>
       <li><b>Step 5 done</b> — attention-MIL → a real per-tile <b>heatmap</b> (the <i>where</i>), <b class="active">AUROC 0.976</b>. Honest catch: no better than baseline, and focal disease stays unsolved.</li>
+      <li><b>Step 6 done</b> — honest validation: AUROC + 95% CI, sensitivity/specificity, leakage check (shuffle → 0.46), 96% head agreement.</li>
     </ul>
     <p style="margin-top:.6em"><b class="active">→ Next</b></p>
     <ul>
-      <li><b>Step 6 — honest validation</b>: consolidate leave-patients-out metrics (CI, sensitivity/specificity, confusion, head-vs-head agreement). ⬅️ <b>next</b></li>
-      <li>Then (deferred): cell/neutrophil detection, stain norm, Geboes / Nancy / Robarts scoring — all on the <b>same</b> frozen embeddings.</li>
+      <li><b>Deferred upgrades</b>: cell/neutrophil detection, stain normalization, Geboes / Nancy / Robarts scoring — each a new head on the <b>same</b> frozen embeddings. ⬅️ <b>next</b></li>
     </ul>
     <p class="muted" style="margin-top:1.4em">New slides are appended as we build each piece.</p>
   </section>
@@ -565,6 +565,25 @@
       map and an honest AUROC — <b>not</b> a solver for the hardest focal cases. That's a named, open problem for later (more data, or a per-tile-supervised head).</div>
   </section>
 
+  <!-- ===== 22B. STEP 6 · HONEST VALIDATION ===== -->
+  <section class="slide media">
+    <div class="kicker">Step 6 · Honest Validation</div>
+    <h2>How good is it — and how do we know it isn't cheating?</h2>
+    <figure>
+      <img class="shot" src="images/validation_report.png" alt="ROC curves, leakage check, and confusion matrices for both heads">
+      <figcaption>Leave-patients-out, 140 slides / 139 patients: ROC with a 95% CI (patient bootstrap), the
+        label-permutation leakage check, and both confusion matrices.</figcaption>
+    </figure>
+    <ul>
+      <li><b>Baseline</b> AUROC <b class="active">0.984</b> (95% CI 0.96–1.00) · sensitivity 94% · specificity 93%.
+          <b>Attention-MIL</b> 0.976 (0.95–0.99) · sens 89% · spec 94%.</li>
+      <li><b>Leakage check:</b> shuffle the labels and the AUROC collapses to <b>0.46</b> (chance) — the 0.98
+          needs the real labels, so the pipeline isn't memorizing or leaking.</li>
+      <li><b>The interval matters:</b> with only 139 patients, "0.98" really means <b>~0.96–1.00</b> — strong, but honestly bounded.</li>
+      <li>The two heads agree on <b>96%</b> of slides; MIL misses a few more active slides (FN 6 vs 3) — it trades a little sensitivity for the heatmap.</li>
+    </ul>
+  </section>
+
   <!-- ===== 23. SUMMARY + WHAT'S NEXT ===== -->
   <section class="slide">
     <div class="kicker">v1 · Summary &amp; next</div>
@@ -591,8 +610,8 @@
            <b>more</b> (6 vs 3). "Abnormal ≠ neutrophils" false positives remain; cell-level confirmation is deferred.</p>
       </div>
     </div>
-    <div class="callout"><b>→ Next — Step 6:</b> lock the honest validation (CI, sensitivity/specificity, confusion,
-      head-vs-head agreement). <b>Then (deferred):</b> cell/neutrophil detection, stain norm, Geboes / Nancy /
+    <div class="callout"><b>→ Done:</b> honest validation locked in (Step 6 — AUROC + 95% CI, sensitivity/specificity,
+      leakage check, head agreement). <b>Next (deferred):</b> cell/neutrophil detection, stain norm, Geboes / Nancy /
       Robarts scoring — all reuse these <b>same</b> frozen embeddings. The foundation doesn't change; we add heads.</div>
   </section>
 
