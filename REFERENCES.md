@@ -29,8 +29,10 @@ subset and the slide-level active/inactive labels.** Released under **CC0 1.0** 
 
 ## Foundation model — H-optimus-0
 
-A 1.1-billion-parameter ViT pathology foundation model, pretrained self-supervised on H&E. Used **frozen**
-(inference only) to embed tiles into 1,536-dim vectors. License **Apache-2.0** (weights gated on HuggingFace).
+A ~1.13-billion-parameter Vision Transformer (**ViT-giant/14**, DINOv2-with-registers; `timm` id
+`vit_giant_patch14_reg4_dinov2`: 40 blocks, 24 heads, 1,536-d, 4 register tokens) pathology foundation model,
+pretrained self-supervised on H&E. Used **frozen** (inference only) to embed each 224×224 tile into a
+1,536-dim vector. License **Apache-2.0** (weights gated on HuggingFace).
 
 - Bioptimus (2024). *H-optimus-0.* Model card: https://huggingface.co/bioptimus/H-optimus-0
 - Loaded via `timm` as `hf-hub:bioptimus/H-optimus-0`.

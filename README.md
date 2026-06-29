@@ -103,6 +103,14 @@ runs on a laptop and needs no GPU cluster or millions of labelled IBD slides. Th
 **swappable**: `H0-mini`, `UNI2`, or `Virchow2` drop into the same slot (pick by a probe on held-out IBD
 slides, not oncology leaderboards).
 
+**Architecture (what we loaded).** A **ViT-giant/14** in the DINOv2-with-registers configuration
+(`timm` id `vit_giant_patch14_reg4_dinov2`): ~**1.13 B** parameters, **40** transformer blocks, **24**
+attention heads, **1,536**-d embeddings, SwiGLU MLPs with LayerScale, and **4** register tokens. Each
+**224×224** tile becomes **256** patches of **14×14** px → tokens → 40 blocks → the **CLS token** is the
+1,536-d fingerprint we cache. Loaded frozen via
+`timm.create_model("hf-hub:bioptimus/H-optimus-0", pretrained=True, init_values=1e-5, dynamic_img_size=False)`,
+with H-optimus-0's H&E normalization (mean `(0.707, 0.579, 0.704)`, std `(0.212, 0.230, 0.178)`).
+
 ## Repository layout
 
 ```
