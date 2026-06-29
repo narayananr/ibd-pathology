@@ -20,32 +20,33 @@ Inflammatory bowel disease (Crohn's, ulcerative colitis) biopsies are graded by 
 project predicts that call per slide **and** produces a per-tile heatmap of *where* the inflammation is, so a
 human can check the evidence.
 
-## The two approaches, in plain English
+## The two approaches, explained
 
-We only know whether a **whole slide** is "active" or "healed" — but the disease can hide in a tiny patch.
-So the puzzle is: *given one label for the whole slide, how do you decide, and how do you find where?*
+A whole biopsy slide is cut into hundreds of small **tiles** (little tissue patches). We only know **one
+label for the whole slide** — "active" (inflammation present) or "healed" — and **not which tiles** show it.
+That's the catch: active inflammation is often **focal** — neutrophils crowding the gut lining, cryptitis, a
+crypt abscess in just a few tiles — while most of the slide still looks normal.
 
-**Analogy:** a slide is a **basket of fruit** (each tile = one piece of fruit). You're told only whether the
-basket *"contains a rotten piece"* (active) or *"is all fresh"* (healed) — never **which** piece.
+First, every tile is turned into a **fingerprint**: a list of numbers describing what that patch of tissue
+looks like (produced by the frozen foundation model). Both approaches work on these fingerprints.
 
-**Approach 1 — Mean-pool baseline → blend it into a smoothie.**
-Throw every piece in a blender, taste the smoothie, decide. Simple and fast. But one rotten apple among
-fifty fresh ones barely changes the taste — a small bad patch gets **diluted** — and the smoothie can't tell
-you *which* piece was rotten.
-*In code:* average all the tile "fingerprints" into one vector, then logistic regression. Good headline
-number, but **no map**.
+**Approach 1 — Mean-pool baseline (average the whole slide).**
+Average all the tiles' fingerprints into one fingerprint for the slide, then a simple classifier calls it
+active or healed. Fast, and good enough to make the *call* — but averaging blends a few inflamed tiles in
+with hundreds of normal ones, so a **small inflamed focus gets diluted**. And because the slide is now a
+single averaged number, it **can't show where** the inflammation is — there's no map.
 
-**Approach 2 — Attention-MIL → a taster who weighs each piece.**
-Instead of blending, a taster checks each piece and learns how much to **weigh** it: a suspicious piece
-counts a lot, a boring fresh one counts almost nothing. The weighted opinion decides the basket — and those
-weights **point straight at the rotten piece**.
-*In code:* a small "attention" network learns a weight per tile from slide labels alone; the weights then
-become the **heatmap** (the *where*).
+**Approach 2 — Attention-MIL (let the model weigh each tile).**
+Keep the tiles separate. A small network learns an **attention weight** for each tile — how much it should
+count toward the verdict. A tile that looks inflamed counts a lot; a calm, normal tile counts almost nothing.
+The model pools the tiles by that weighting and then classifies. It is trained on **slide labels only** — but
+the only way to correctly call a focal slide "active" is to put its weight on the few inflamed tiles. So the
+learned weights double as the **heatmap**: colour each tile by its weight and you see the exact region that
+drove the call.
 
-**What we found:** on this data both score about the same (AUROC **0.984** vs **0.976**) — the smoothie is
-already good enough to *call* the slide. Attention-MIL's real value is the **map**: it highlights the region
-that drove the call, which a pathologist can check. (Honestly, neither reliably catches the *very* focal
-cases yet — see [Limitations](#limitations).)
+**What we found:** both score about the same (AUROC **0.984** vs **0.976**) — averaging is already enough to
+*call* the slide. Attention-MIL's real value is the **map** — the inflamed region a pathologist can check.
+(Honestly, neither reliably catches the *very* focal cases yet — see [Limitations](#limitations).)
 
 ## Results
 
