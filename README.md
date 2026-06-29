@@ -177,6 +177,13 @@ Open either in a browser; navigate with arrow keys / space.
   future head on the same embeddings, e.g. CellViT/HoVer-Net).
 - Single public cohort (NTNU / St. Olavs). No external/multi-center validation. Not a clinical tool.
 
+## Roadmap
+
+v1 (Steps 1–6) is complete. Planned next steps — each a new head on the **same** frozen embeddings — are in
+**[`ROADMAP.md`](ROADMAP.md)**. The strongest is **cell-level quantification** (cell type & inflammation
+status per tile, toward Geboes / Nancy / Robarts); a concrete first-slice plan with the feasibility gates is
+in **[`docs/cell-quantification-plan.md`](docs/cell-quantification-plan.md)**.
+
 ## References & citation
 
 Full citations (dataset, model, method, libraries, tools) are in **[`REFERENCES.md`](REFERENCES.md)**. If you
