@@ -73,6 +73,36 @@ One **frozen** pathology foundation model encodes tiles into embeddings; every m
 trained on the cached embeddings. The pretraining is done up front — so the trainable parts are tiny and run on
 a laptop GPU.
 
+## What the foundation model does (H-optimus-0, by Bioptimus)
+
+**H-optimus-0** is a *pathology foundation model* from [Bioptimus](https://www.bioptimus.com): a large vision
+Transformer (~1.1 billion parameters) **pre-trained on a very large collection of H&E histopathology slides**,
+with **no task labels** — by self-supervision (it learns the structure of tissue much like a large language
+model learns the structure of text). The upshot: it already "knows" what nuclei, glands, stroma and
+inflammation *look like* in stained tissue, before we ask it anything.
+
+**What it does for us:** it turns each 224×224 tile into a **1,536-number embedding** (a "fingerprint") that
+summarizes what's in that patch — cell density, gland architecture, how ordered or disordered the tissue is.
+We run it **frozen** (inference only, never trained), once per tile, and cache the result; every head we build
+sits on those fingerprints.
+
+**Why that's powerful — concrete examples from this project:**
+
+- **Similar tissue → similar fingerprint.** Two normal crypt-ring tiles land close together in
+  fingerprint-space; an eroded, neutrophil-dense tile lands far away. Distance ≈ difference in histology.
+- **The inflammation signal is already there, with the encoder untrained.** A plain logistic regression on the
+  *averaged* fingerprints separates active vs healed at **AUROC 0.98** — and even the **single most useful** of
+  the 1,536 numbers separates at **0.87**. We never taught it inflammation; the pretraining captured it.
+- **It organizes tissue on its own.** Plotting every tile's fingerprint (t-SNE) shows a smooth
+  **normal → inflamed gradient**, with the confidently-inflamed tiles clustering together — structure the
+  model found by itself (see the deck's tile-embedding map).
+
+**Why we don't train it:** the expensive part — learning general tissue morphology from a huge image corpus —
+is already done, so we only train a **tiny head** for our specific active-vs-healed question. That's why this
+runs on a laptop and needs no GPU cluster or millions of labelled IBD slides. The encoder is also
+**swappable**: `H0-mini`, `UNI2`, or `Virchow2` drop into the same slot (pick by a probe on held-out IBD
+slides, not oncology leaderboards).
+
 ## Repository layout
 
 ```
