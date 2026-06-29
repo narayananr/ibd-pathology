@@ -1,0 +1,17 @@
+numpy
+scikit-learn
+matplotlib
+h5py
+shapely
+pillow
+openslide-python
+huggingface_hub
+datasets
+
+# --- Installed separately (not via this file) ---
+# TRIDENT (pulls in torch + timm):
+#   pip install git+https://github.com/mahmoodlab/trident.git
+# Install the torch CUDA build that matches your GPU/driver, see https://pytorch.org
+# OpenSlide SYSTEM library (the python binding above is not enough):
+#   Debian/Ubuntu:  sudo apt-get install openslide-tools
+#   macOS:          brew install openslide

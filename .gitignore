@@ -1,0 +1,20 @@
+# --- Python ---
+.venv/
+.venv-embed/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# --- Project data & outputs (large / generated) ---
+data/
+artifacts/
+inflamed_maps/
+trident_processed/
+*.zip
+*.h5
+*.ndpi
+
+# --- OS / editor ---
+.DS_Store
+.vscode/

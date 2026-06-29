@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBD H&amp;E — Inflamed vs Healed · 5-minute overview</title>
+<!--
+  Standalone 5-slide overview for someone seeing this work for the first time.
+  Problem → Approach → Results (×2) → Honest limits & next. Image-forward.
+  Self-contained; images live in slides/images/. Navigate: arrows / space / on-screen buttons.
+  The full build log is in index.html.
+-->
+<style>
+  :root{
+    --bg:#0f1117; --panel:#171a23; --ink:#e8eaf0; --muted:#9aa3b2;
+    --line:#2a2f3d; --accent:#5b8cff; --active:#ff5d6c; --healed:#33c08d;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--bg); color:var(--ink);
+       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       -webkit-font-smoothing:antialiased; overflow:hidden}
+  #deck{height:100vh; width:100vw; position:relative}
+  .slide{position:absolute; inset:0; display:none; padding:4vh 6vw 6vh; overflow:auto; animation:fade .35s ease}
+  .slide.active{display:flex; flex-direction:column; justify-content:safe center}
+  @keyframes fade{from{opacity:0; transform:translateY(8px)}to{opacity:1; transform:none}}
+
+  h1{font-size:clamp(26px,4vw,48px); line-height:1.06; margin:0 0 .25em}
+  h2{font-size:clamp(21px,3.1vw,38px); margin:0 0 .45em; line-height:1.12}
+  .kicker{color:var(--accent); font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+          font-size:clamp(11px,1.3vw,15px); margin-bottom:.8em}
+  p,li{font-size:clamp(14px,1.55vw,21px); line-height:1.45; color:var(--ink)}
+  ul{margin:.25em 0; padding-left:1.1em} li{margin:.4em 0}
+  .muted{color:var(--muted)}
+  b.active{color:var(--active)} b.healed{color:var(--healed)}
+  code{background:#222736; padding:.08em .4em; border-radius:5px; font-size:.92em}
+
+  figure{margin:.2em 0}
+  .shot{width:100%; max-height:52vh; object-fit:contain; border-radius:12px;
+        border:1px solid var(--line); background:#fff}
+  figcaption{color:var(--muted); font-size:clamp(12px,1.2vw,15px); margin-top:.45em}
+
+  .belt{display:flex; flex-wrap:wrap; gap:9px; margin:.5em 0 .9em}
+  .belt .step{background:var(--panel); border:1px solid var(--line); border-radius:10px;
+              padding:.55em .85em; font-size:clamp(12px,1.4vw,17px)}
+  .belt .step.us{border-color:#3a5bbf; box-shadow:0 0 0 1px #3a5bbf inset}
+  .belt .arrow{align-self:center; color:var(--muted)}
+  .callout{background:var(--panel); border-left:4px solid var(--accent); padding:.75em 1.05em;
+           border-radius:8px; margin-top:.7em; font-size:clamp(13px,1.45vw,19px)}
+
+  #bar{position:fixed; left:0; bottom:0; width:100%; height:5px; background:#000a}
+  #fill{height:100%; width:0; background:linear-gradient(90deg,var(--healed),var(--active)); transition:width .3s}
+  #nav{position:fixed; bottom:14px; right:18px; display:flex; gap:8px; z-index:10}
+  .btn{background:var(--panel); border:1px solid var(--line); color:var(--ink);
+       width:38px; height:38px; border-radius:9px; font-size:18px; cursor:pointer}
+  .btn:hover{border-color:var(--accent)}
+  #count{position:fixed; bottom:20px; left:18px; color:var(--muted); font-size:13px;
+         font-variant-numeric:tabular-nums; z-index:10}
+  #chip{position:fixed; top:16px; right:18px; color:var(--muted); font-size:12px;
+        letter-spacing:.08em; text-transform:uppercase; z-index:10}
+</style>
+</head>
+<body>
+<div id="chip">IBD · Inflamed vs Healed · overview</div>
+<div id="deck">
+
+  <!-- ===== 1. PROBLEM ===== -->
+  <section class="slide">
+    <div class="kicker">IBD · Computational Pathology</div>
+    <h2>The problem: map <b class="active">active</b> inflammation on a colon biopsy</h2>
+    <figure>
+      <img class="shot" src="images/overview_problem.png" alt="A whole biopsy slide beside an active tile and a healed tile">
+      <figcaption>One H&amp;E biopsy slide (left) and the two looks we must tell apart at the cell level (right).</figcaption>
+    </figure>
+    <ul>
+      <li>In inflammatory bowel disease, pathologists read each biopsy as <b class="active">active</b>
+          (neutrophils attacking the gut lining) vs <b class="healed">healed</b>. It guides treatment — but it's manual and subjective.</li>
+      <li>The hard part: one slide holds <b>thousands of cells</b>, disease is often a <b>small focus</b> in
+          otherwise-normal tissue, and the only training labels we have are <b>per-slide</b>, not per-region.</li>
+      <li><b>Goal:</b> an automatic, per-region <b class="active">inflamed</b>-vs-<b class="healed">healed</b> heatmap — plus an honest accuracy number.</li>
+    </ul>
+  </section>
+
+  <!-- ===== 2. APPROACH ===== -->
+  <section class="slide">
+    <div class="kicker">The Approach</div>
+    <h2>Stand on a frozen “foundation model”, train only a tiny head</h2>
+    <div class="belt">
+      <span class="step">🖼️ whole-slide image</span><span class="arrow">→</span>
+      <span class="step">▦ cut into tiles</span><span class="arrow">→</span>
+      <span class="step us">🧠 frozen H-optimus-0<br><span class="muted">1.1B-param AI, pre-trained on H&amp;E</span></span><span class="arrow">→</span>
+      <span class="step">🔢 1,536-number fingerprint / tile</span><span class="arrow">→</span>
+      <span class="step us">⚖️ tiny attention head</span><span class="arrow">→</span>
+      <span class="step">🗺️ heatmap</span>
+    </div>
+    <ul>
+      <li>A <b>foundation model</b> is a large AI pre-trained on a huge pile of pathology images; it already
+          “understands” tissue. We use it <b>frozen</b> — pure look-up, <b>no expensive training</b>.</li>
+      <li>On top we train a <b>tiny head</b> that does two things at once: call the slide
+          <b class="active">active</b>/<b class="healed">healed</b>, and <b>spotlight the tiles</b> that drove that call → the heatmap.</li>
+      <li>It learns from <b>slide-level labels only</b> (no one marks individual tiles), and we score it
+          <b>leave-patients-out</b> — a patient's slides never sit on both sides of the test, so the number is honest.</li>
+    </ul>
+  </section>
+
+  <!-- ===== 3. RESULT — SIGNAL IS REAL ===== -->
+  <section class="slide">
+    <div class="kicker">Result 1 · The signal is real</div>
+    <h2>It separates active from healed — <b class="active">AUROC 0.98</b>, no leakage</h2>
+    <figure>
+      <img class="shot" src="images/baseline_evidence.png" alt="PCA scatter, prediction histogram, and ROC curve">
+      <figcaption>140 slides: the two classes form separate clouds (left), predictions pile at 0 and 1 (middle), ROC AUROC 0.984 (right).</figcaption>
+    </figure>
+    <ul>
+      <li><b>AUROC 0.98</b> across all 140 slides (1.0 = perfect, 0.5 = coin-flip) — held-out, grouped by patient.</li>
+      <li><b>Sanity check:</b> shuffle the labels and it collapses to <b>0.52</b> → the model is reading real biology, not a hidden shortcut.</li>
+    </ul>
+  </section>
+
+  <!-- ===== 4. RESULT — THE MAP ===== -->
+  <section class="slide">
+    <div class="kicker">Result 2 · The deliverable</div>
+    <h2>A per-tile <b class="active">inflamed</b>-vs-<b class="healed">healed</b> map — from slide labels alone</h2>
+    <figure>
+      <img class="shot" src="images/mil_active_vs_calm.png" alt="Heatmap of an active slide with one hot-spot beside a calm slide with none">
+      <figcaption>Colour = how hard the model looked at each tile. <b class="active">Active</b> slide (left) → one red hot-spot; <b class="healed">healed</b> slide (right) → none.</figcaption>
+    </figure>
+    <ul>
+      <li>The model was <b>never told which tiles</b> are diseased — only the slide's overall label. Yet it learns
+          to put a bright <b class="active">spotlight</b> on the inflamed region and stay cool on a healed slide.</li>
+      <li>That spotlight is the deliverable: a <b>map a clinician can check</b> — “the call came from <i>here</i>.”</li>
+    </ul>
+  </section>
+
+  <!-- ===== 5. HONEST LIMITS + NEXT ===== -->
+  <section class="slide">
+    <div class="kicker">Honest limits &amp; what's next</div>
+    <h2>Disease is a spectrum — and the <b class="active">focal</b> end is still hard</h2>
+    <figure>
+      <img class="shot" src="images/disease_spectrum.png" alt="Four slides on one scale: focal, patchy, diffuse, calm">
+      <figcaption>Coloured by how inflamed each tile looks: focal (rare, hard) → patchy → diffuse (common, easy) → calm.</figcaption>
+    </figure>
+    <ul>
+      <li>Most active slides are <b>broadly inflamed</b> and easy. The rare <b class="active">focal</b> cases — one tiny
+          inflamed spot — are <b>still missed</b>. We <b>report this honestly</b> rather than hide it.</li>
+      <li><b>Next:</b> finalize the validation, then add cell-level neutrophil detection and formal severity scores
+          (Geboes / Nancy / Robarts) — each a new head on the <b>same</b> frozen embeddings.</li>
+    </ul>
+    <div class="callout"><b>One-line summary:</b> a frozen pathology AI + a tiny trained head turns a whole biopsy into an
+      honest, checkable <b class="active">inflamed</b>-vs-<b class="healed">healed</b> map — built on public data, on a laptop.</div>
+    <p class="muted" style="font-size:clamp(11px,1.05vw,14px); margin-top:.7em">
+      <b>Data:</b> IBDColEpi (CC0) — Pettersen et al. 2021, <code>doi:10.18710/TLA01U</code> ·
+      <b>Model:</b> H-optimus-0 (Bioptimus, Apache-2.0) · <b>Method:</b> attention-MIL (Ilse et al. 2018) ·
+      full citations in <code>REFERENCES.md</code>.</p>
+  </section>
+
+</div>
+
+<div id="count"></div>
+<div id="nav">
+  <button class="btn" id="prev" title="Previous (←)">‹</button>
+  <button class="btn" id="next" title="Next (→)">›</button>
+</div>
+<div id="bar"><div id="fill"></div></div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  let i=0;
+  function show(n){
+    i=(n+slides.length)%slides.length;
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    document.getElementById('count').textContent=(i+1)+' / '+slides.length;
+    document.getElementById('fill').style.width=((i+1)/slides.length*100)+'%';
+    location.hash=i+1;
+  }
+  document.getElementById('next').onclick=()=>show(i+1);
+  document.getElementById('prev').onclick=()=>show(i-1);
+  addEventListener('keydown',e=>{
+    if(['ArrowRight',' ','PageDown'].includes(e.key)){show(i+1);e.preventDefault();}
+    else if(['ArrowLeft','PageUp'].includes(e.key)){show(i-1);e.preventDefault();}
+    else if(e.key==='Home'){show(0);} else if(e.key==='End'){show(slides.length-1);}
+  });
+  show((parseInt(location.hash.replace('#',''))||1)-1);
+</script>
+</body>
+</html>

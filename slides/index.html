@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBD H&amp;E — Inflamed vs Healed · Build Log</title>
+<!--
+  ============================================================================
+  HOW TO ADD A SLIDE (read me!)
+  ----------------------------------------------------------------------------
+  Each slide is one <section class="slide"> ... </section> inside <div id="deck">.
+  Copy an existing block, change the contents, done. Slides show in document order.
+  Navigate in the browser with: arrow keys, spacebar, or the on-screen arrows.
+  Images live in slides/images/.  Theme colours: --active (red) / --healed (green).
+  This file is a running logbook — we append to it as the project progresses.
+  ============================================================================
+-->
+<style>
+  :root{
+    --bg:#0f1117; --panel:#171a23; --ink:#e8eaf0; --muted:#9aa3b2;
+    --line:#2a2f3d; --accent:#5b8cff;
+    --active:#ff5d6c; --active-dim:#3a1c22;
+    --healed:#33c08d; --healed-dim:#16332a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased; overflow:hidden;
+  }
+  #deck{height:100vh; width:100vw; position:relative}
+  .slide{
+    position:absolute; inset:0; display:none;
+    padding:4vh 7vw 6vh; overflow:auto;
+    animation:fade .35s ease;
+  }
+  /* safe center = vertically centre when it fits, else align to top & let it scroll
+     (plain "center" clips the top of tall slides and you can't scroll up to it) */
+  .slide.active{display:flex; flex-direction:column; justify-content:safe center}
+  @keyframes fade{from{opacity:0; transform:translateY(8px)}to{opacity:1; transform:none}}
+
+  h1{font-size:clamp(28px,5vw,58px); line-height:1.05; margin:0 0 .3em}
+  h2{font-size:clamp(22px,3.4vw,40px); margin:0 0 .55em; line-height:1.1}
+  .kicker{color:var(--accent); font-weight:700; letter-spacing:.14em;
+          text-transform:uppercase; font-size:clamp(11px,1.3vw,15px); margin-bottom:1.1em}
+  p,li{font-size:clamp(15px,1.7vw,22px); line-height:1.5; color:var(--ink)}
+  ul{margin:.2em 0; padding-left:1.1em} li{margin:.42em 0}
+  .muted{color:var(--muted)}
+  .sub{color:var(--muted); font-size:clamp(16px,2vw,26px); margin-top:.2em}
+  b.active{color:var(--active)} b.healed{color:var(--healed)}
+  code{background:#222736; padding:.08em .4em; border-radius:5px; font-size:.92em}
+
+  .two{display:grid; grid-template-columns:1fr 1fr; gap:4vw; align-items:center}
+  @media (max-width:900px){.two{grid-template-columns:1fr}}
+  figure{margin:0}
+  .shot{width:100%; max-height:62vh; object-fit:contain; border-radius:12px;
+        border:1px solid var(--line); background:#000}
+  /* on slides that pair an image with bullets/callout, keep the figure shorter so text fits */
+  .slide.media .shot{max-height:48vh}
+  figcaption{color:var(--muted); font-size:clamp(12px,1.25vw,15px); margin-top:.5em}
+
+  .tag{display:inline-block; padding:.18em .7em; border-radius:999px;
+       font-weight:700; font-size:clamp(13px,1.5vw,18px); margin-bottom:.7em}
+  .tag.active{color:var(--active); background:var(--active-dim); border:1px solid #5a2730}
+  .tag.healed{color:var(--healed); background:var(--healed-dim); border:1px solid #234f40}
+
+  .belt{display:flex; flex-wrap:wrap; gap:10px; margin:.6em 0 1em}
+  .belt .step{background:var(--panel); border:1px solid var(--line); border-radius:10px;
+              padding:.6em .9em; font-size:clamp(13px,1.5vw,18px)}
+  .belt .step.us{border-color:#3a5bbf; box-shadow:0 0 0 1px #3a5bbf inset}
+  .belt .arrow{align-self:center; color:var(--muted)}
+
+  .cards{display:grid; grid-template-columns:1fr 1fr; gap:1.4vw; margin:.6em 0}
+  @media (max-width:900px){.cards{grid-template-columns:1fr}}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:.95em 1.15em}
+  .card.us{border-color:#3a5bbf; box-shadow:0 0 0 1px #3a5bbf inset}
+  .card h3{margin:0 0 .4em; font-size:clamp(16px,1.9vw,23px); display:flex; align-items:center; gap:.45em}
+  .card h3 .ico{font-size:1.15em}
+  .card h3 .who{font-weight:400; font-size:.62em; letter-spacing:.04em; text-transform:uppercase; color:var(--muted)}
+  .card p{margin:0; font-size:clamp(13px,1.45vw,18px); color:var(--ink); line-height:1.46}
+
+  table{border-collapse:collapse; margin:.5em 0; font-size:clamp(13px,1.5vw,19px)}
+  td,th{border:1px solid var(--line); padding:.45em .8em; text-align:left}
+  th{color:var(--muted); font-weight:600}
+
+  .callout{background:var(--panel); border-left:4px solid var(--accent);
+           padding:.8em 1.1em; border-radius:8px; margin-top:.8em}
+
+  /* chrome */
+  #bar{position:fixed; left:0; bottom:0; width:100%; height:5px; background:#000a}
+  #fill{height:100%; width:0; background:linear-gradient(90deg,var(--healed),var(--active)); transition:width .3s}
+  #nav{position:fixed; bottom:14px; right:18px; display:flex; gap:8px; align-items:center; z-index:10}
+  .btn{background:var(--panel); border:1px solid var(--line); color:var(--ink);
+       width:38px; height:38px; border-radius:9px; font-size:18px; cursor:pointer}
+  .btn:hover{border-color:var(--accent)}
+  #count{position:fixed; bottom:20px; left:18px; color:var(--muted);
+         font-size:13px; font-variant-numeric:tabular-nums; z-index:10}
+  #title-chip{position:fixed; top:16px; right:18px; color:var(--muted); font-size:12px;
+              letter-spacing:.08em; text-transform:uppercase; z-index:10}
+</style>
+</head>
+<body>
+<div id="title-chip">IBD · Inflamed vs Healed</div>
+
+<div id="deck">
+
+  <!-- ===== 1. TITLE ===== -->
+  <section class="slide">
+    <div class="kicker">Computational Pathology · Build Log</div>
+    <h1>IBD H&amp;E:<br>Inflamed vs Healed</h1>
+    <p class="sub">A region map of active inflammation on colon biopsies —<br>
+       built on a <b>frozen</b> pathology foundation model, one small step at a time.</p>
+    <p class="muted" style="margin-top:2em">Started 2026-06-28 · this deck grows as we go.</p>
+  </section>
+
+  <!-- ===== 2. THE CHALLENGE ===== -->
+  <section class="slide">
+    <div class="kicker">The Challenge</div>
+    <h2>Turn a giant slide into an honest "inflamed vs healed" map</h2>
+    <p><b>Goal:</b> for each H&amp;E biopsy slide, produce a heatmap of where disease is
+       <b class="active">active</b> vs <b class="healed">healed</b> — plus a validation number we can trust.</p>
+    <p style="margin-top:.8em"><b>Why it's hard:</b></p>
+    <ul>
+      <li>🐘 <b>Slides are huge</b> — one whole-slide image is 1–4&nbsp;GB, billions of pixels. Can't feed it whole to any model.</li>
+      <li>🏷️ <b>Labels are slide-level</b> (the whole slide is tagged <i>active</i> or <i>inactive</i>) — we are <i>not</i> told which regions.</li>
+      <li>🎯 <b>Disease is focal</b> — even in an "active" slide, most tissue looks normal. So a slide's label is a noisy guess for any single region.</li>
+      <li>💧 <b>Leaks easily</b> — tiles from one slide aren't independent; validation must be grouped by slide/patient or the score is fake.</li>
+    </ul>
+  </section>
+
+  <!-- ===== 3. OUR APPROACH ===== -->
+  <section class="slide">
+    <div class="kicker">Our Approach</div>
+    <h2>A conveyor belt — and we only own the small end</h2>
+    <div class="belt">
+      <span class="step">🧫 Whole slide</span><span class="arrow">→</span>
+      <span class="step">✂️ Tile it<br><span class="muted">TRIDENT</span></span><span class="arrow">→</span>
+      <span class="step">🧠 Embed tiles<br><span class="muted">frozen foundation model</span></span><span class="arrow">→</span>
+      <span class="step us">🎓 Light head<br><span class="muted">we train THIS</span></span><span class="arrow">→</span>
+      <span class="step">🗺️ Stitch heatmap</span>
+    </div>
+    <ul>
+      <li><b>The encoder is frozen.</b> A model pretrained on millions of pathology images turns each tile into a list of numbers (an "embedding"). We never retrain it — the heavy lifting is done.</li>
+      <li><b>We train only the small head</b> that reads those numbers and scores inflamed vs healed.</li>
+      <li><b>v1 = the smallest useful slice:</b> embeddings → light head → heatmap → honest validation. Fancier scoring comes later, on the <i>same</i> embeddings.</li>
+    </ul>
+  </section>
+
+  <!-- ===== 3B. UNDER THE HOOD ===== -->
+  <section class="slide">
+    <div class="kicker">Our Approach · Under the Hood</div>
+    <h2>Four moving parts — we build only two</h2>
+    <div class="cards">
+      <div class="card">
+        <h3><span class="ico">✂️</span> TRIDENT <span class="who">off-the-shelf</span></h3>
+        <p>One command: finds tissue → cuts 256px tiles at 20× → runs each through the encoder.
+           Output per slide: one <code>.h5</code> of <code>features</code> + <code>coords</code>.</p>
+      </div>
+      <div class="card">
+        <h3><span class="ico">🧠</span> Frozen encoder <span class="who">off-the-shelf</span></h3>
+        <p>A model pretrained on millions of tiles (<b>H-optimus&nbsp;/&nbsp;H0-mini</b>). Each tile →
+           an <b>embedding</b>: a ~1.5k-number "fingerprint." Look-alikes land nearby — <i>never taught IBD</i>.</p>
+      </div>
+      <div class="card us">
+        <h3><span class="ico">🎓</span> Our head <span class="who">we build</span></h3>
+        <p>Reads each fingerprint → <code>P(active)</code> for that tile. Tiny — trains in seconds on
+           CPU. The encoder stays <b>frozen</b>.</p>
+      </div>
+      <div class="card us">
+        <h3><span class="ico">🗺️</span> Heatmap <span class="who">we build</span></h3>
+        <p>Colour each tile by <code>P(active)</code> (cool → <b class="active">red</b>), overlaid on
+           the thumbnail → shows <b>where</b> disease is &amp; lets a pathologist sanity-check it.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 4. THE BIOLOGY ===== -->
+  <section class="slide">
+    <div class="kicker">What We're Actually Detecting</div>
+    <h2>One feature separates the two classes</h2>
+    <p><b class="active">Active / inflamed</b> = <b>neutrophils (immune cells) invading the epithelium</b> —
+       cryptitis → crypt abscess → surface erosion.</p>
+    <p><b class="healed">Inactive / healed</b> = orderly, quiet crypts. (Old scarring is allowed — only <i>active</i> inflammation counts.)</p>
+    <div class="callout">
+      <b>Reading H&amp;E (the pink/purple stain):</b><br>
+      🌸 <b>Pink</b> = cytoplasm, connective tissue, secretions &nbsp;·&nbsp;
+      🟣 <b>Purple dots</b> = cell nuclei.<br>
+      So a <b>dense cloud of dark dots = a crowd of cells</b>, and a crowd of immune cells = inflammation.
+    </div>
+  </section>
+
+  <!-- ===== 5. IMAGE A — HEALED ===== -->
+  <section class="slide">
+    <div class="two">
+      <figure>
+        <img class="shot" src="images/inactive_normal_colon.jpg" alt="Normal colonic mucosa H&E">
+        <figcaption>Normal colonic mucosa, H&amp;E. Wikimedia Commons (CC-BY-SA).</figcaption>
+      </figure>
+      <div>
+        <span class="tag healed">HEALED / inactive</span>
+        <h2>The calm reference</h2>
+        <ul>
+          <li><b>Test-tubes-in-a-rack:</b> crypts are long, parallel, evenly spaced.</li>
+          <li>Crypt openings are <b>clean empty rings</b> (pale goblet cells = mucus).</li>
+          <li>The tissue <i>between</i> crypts is quiet — few dark dots.</li>
+        </ul>
+        <div class="callout"><b>For our model:</b> this should score <b class="healed">low</b>.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 6. IMAGE B — ACTIVE (cryptitis intermed) ===== -->
+  <section class="slide">
+    <div class="two">
+      <figure>
+        <img class="shot" src="images/active_cryptitis_intermed.jpg" alt="Cryptitis, intermediate magnification">
+        <figcaption>Cryptitis, intermediate magnification, H&amp;E. Wikimedia Commons (CC-BY-SA, Nephron).</figcaption>
+      </figure>
+      <div>
+        <span class="tag active">ACTIVE / inflamed</span>
+        <h2>Crowded and messy</h2>
+        <ul>
+          <li>The neat rack is gone — architecture is distorted.</li>
+          <li>Spaces between crypts are <b>stuffed with dark inflammatory nuclei</b>.</li>
+          <li>The surface (top edge) looks ragged / damaged.</li>
+        </ul>
+        <div class="callout"><b>For our model:</b> this should score <b class="active">high</b>.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 7. IMAGE C — CRYPT ABSCESS ===== -->
+  <section class="slide">
+    <div class="two">
+      <figure>
+        <img class="shot" src="images/active_crypt_abscess.jpg" alt="Crypt abscess H&E">
+        <figcaption>Crypt abscess, H&amp;E. Wikimedia Commons (CC-BY-SA).</figcaption>
+      </figure>
+      <div>
+        <span class="tag active">ACTIVE · the hallmark</span>
+        <h2>Crypt abscess = a gland filled with pus</h2>
+        <ul>
+          <li>A crypt cut <b>across</b> looks like a <b>ring</b> (a donut) — wall + hollow centre.</li>
+          <li>Here the centre is <b>packed with neutrophils</b> (dark lumpy dots + pink debris) = an abscess.</li>
+          <li>In a healthy crypt that centre would be an <i>empty</i> pale hole.</li>
+        </ul>
+        <table>
+          <tr><th>Where the neutrophils are</th><th>Name</th></tr>
+          <tr><td>None in the lining</td><td>healthy / inactive</td></tr>
+          <tr><td>In the crypt <i>wall</i></td><td>cryptitis</td></tr>
+          <tr><td>In the crypt <i>centre</i></td><td><b class="active">crypt abscess</b></td></tr>
+        </table>
+        <div class="callout"><b>Our loudest signal &amp; sanity check:</b> if the model can't light up on tiles like this, nothing downstream works.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 8. IMAGE D — CRYPTITIS HIGH MAG ===== -->
+  <section class="slide">
+    <div class="two">
+      <figure>
+        <img class="shot" src="images/active_cryptitis_high.jpg" alt="Cryptitis, high magnification">
+        <figcaption>Cryptitis, high magnification, H&amp;E. Wikimedia Commons (CC-BY-SA, Nephron).</figcaption>
+      </figure>
+      <div>
+        <span class="tag active">ACTIVE · up close</span>
+        <h2>Cryptitis — the step before an abscess</h2>
+        <ul>
+          <li>Neutrophils are <b>squeezing into and between</b> the epithelial cells of the crypt lining.</li>
+          <li>The surface at the top is <b>eroded / frayed</b>.</li>
+          <li>This is what "neutrophils invading the epithelium" looks like before pus collects.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 9. KEY MODELING INSIGHT ===== -->
+  <section class="slide">
+    <div class="kicker">The Insight That Shapes Everything</div>
+    <h2>Focal disease → we can't trust slide→tile labels</h2>
+    <ul>
+      <li>An "active" slide is mostly <b class="healed">calm</b> tissue with a <b class="active">few</b> guilty spots.</li>
+      <li>So pasting the slide's label onto every tile mislabels most of them.</li>
+      <li>👉 <b>Plan:</b> use <b>attention-MIL</b> — train on the slide label, let the model <i>find</i> the guilty tiles itself, and read its attention as the heatmap.</li>
+      <li>👉 <b>Always validate grouped by slide/patient</b> — never a random tile split (it leaks).</li>
+    </ul>
+  </section>
+
+  <!-- ===== 10. WHERE WE ARE ===== -->
+  <section class="slide">
+    <div class="kicker">Progress</div>
+    <h2>Where we are &amp; what's next</h2>
+    <p><b class="healed">✓ Done</b></p>
+    <ul>
+      <li>Understood the target biology: <b class="active">active</b> = neutrophils in epithelium.</li>
+      <li>Looked at active vs healed H&amp;E — textbook images <i>and</i> real dataset tiles.</li>
+      <li><b>Environment ready</b> — project <code>.venv</code> with the light core (numpy, pandas, scikit-learn, …).</li>
+      <li><b>Data downloaded &amp; MD5-verified</b> — the pre-tiled HE patch set (8.76&nbsp;GB).</li>
+      <li><b>Step 1 done</b> — built <code>artifacts/patch_manifest.csv</code> (6,322 tiles · 140 slides) + 16 tests.</li>
+      <li><b>Step 2 done</b> — labels found &amp; attached (54 active / 86 inactive) + 10 tests.</li>
+      <li><b>Step 3 done</b> — embedded all 6,322 tiles with frozen H-optimus-0 on the Mac GPU (MPS) → cached.</li>
+      <li><b>Step 4 done</b> — baseline: <b class="active">AUROC 0.98</b> (leave-patients-out), verified no leakage.</li>
+      <li><b>Step 5 done</b> — attention-MIL → a real per-tile <b>heatmap</b> (the <i>where</i>), <b class="active">AUROC 0.976</b>. Honest catch: no better than baseline, and focal disease stays unsolved.</li>
+    </ul>
+    <p style="margin-top:.6em"><b class="active">→ Next</b></p>
+    <ul>
+      <li><b>Step 6 — honest validation</b>: consolidate leave-patients-out metrics (CI, sensitivity/specificity, confusion, head-vs-head agreement). ⬅️ <b>next</b></li>
+      <li>Then (deferred): cell/neutrophil detection, stain norm, Geboes / Nancy / Robarts scoring — all on the <b>same</b> frozen embeddings.</li>
+    </ul>
+    <p class="muted" style="margin-top:1.4em">This logbook keeps growing — new slides get appended as we build each piece.</p>
+  </section>
+
+  <!-- ===== 11. END-TO-END JOURNEY ===== -->
+  <section class="slide">
+    <div class="kicker">The Approach · End to End</div>
+    <h2>From one giant slide to a trustworthy map</h2>
+    <p><b>Input:</b> ONE giant slide <span class="muted">(1–4&nbsp;GB)</span> + ONE word —
+       <b class="active">active</b> or <b class="healed">inactive</b>. <b>Output:</b> a red/blue
+       map + an honest number. Here is the whole bridge between them:</p>
+    <div class="belt">
+      <span class="step">🧫 Whole slide<br><span class="muted">+ one word</span></span><span class="arrow">→</span>
+      <span class="step">✂️ Tile<br><span class="muted">TRIDENT</span></span><span class="arrow">→</span>
+      <span class="step">🧠 Embed<br><span class="muted">frozen model</span></span><span class="arrow">→</span>
+      <span class="step us">🎓 Score<br><span class="muted">we build</span></span><span class="arrow">→</span>
+      <span class="step us">🗺️ Stitch<br><span class="muted">we build</span></span><span class="arrow">→</span>
+      <span class="step us">📏 Validate<br><span class="muted">we build</span></span>
+    </div>
+    <table>
+      <tr><th>Stage</th><th>What happens</th><th>Tool / what we get</th></tr>
+      <tr><td><b>1 · Tile</b></td><td>find tissue, cut ~1,000 tiles, remember each tile's position</td><td>TRIDENT</td></tr>
+      <tr><td><b>2 · Embed</b></td><td>each tile → ~1,500 numbers (a "fingerprint")</td><td>frozen foundation model</td></tr>
+      <tr><td><b>3 · Score</b></td><td>tiny head reads fingerprints → <code>P(active)</code> per tile</td><td><b>we build</b></td></tr>
+      <tr><td><b>4 · Stitch</b></td><td>paint scores onto the thumbnail → red/blue map</td><td><b>we build</b></td></tr>
+      <tr><td><b>5 · Validate</b></td><td>leave-slides-out test → AUROC + agreement</td><td><b>we build</b></td></tr>
+    </table>
+    <div class="callout"><b>Only Stages 3–5 are ours.</b> Stages 1–2 are off-the-shelf and
+      <b>cached once</b> — small, cheap, CPU-friendly. Full write-up: <code>APPROACH.md</code>.</div>
+  </section>
+
+  <!-- ===== 12. THE THREE MODELING STEPS ===== -->
+  <section class="slide">
+    <div class="kicker">The Approach · The Head</div>
+    <h2>Three steps up — and we never hand-label tiles</h2>
+    <div class="callout">
+      <b>Two kinds of "label" — keep them straight:</b><br>
+      🏷️ <b>Slide label</b> = one word per slide. <b>The only label we ever need</b> — it already
+      exists (hidden in the WSI filename); we just look it up.<br>
+      🚫 <b>Tile label</b> = which <i>individual</i> tiles are inflamed. <b>We never make these by hand.</b>
+    </div>
+    <table>
+      <tr><th>Step</th><th>Uses</th><th>Gives</th><th>Hand-label tiles?</th></tr>
+      <tr><td><b>a · Mean-pool → logistic regression</b></td><td>slide labels only</td><td>"is the signal there?" (AUROC gate)</td><td><b class="healed">no</b></td></tr>
+      <tr><td><b>b · Attention-MIL</b> <span class="muted">(the deliverable)</span></td><td>slide labels only</td><td>the heatmap — model <i>finds</i> the tiles itself</td><td><b class="healed">no</b></td></tr>
+      <tr><td><b>c · QuPath polygons</b> <span class="muted">(optional, last)</span></td><td>a few you draw</td><td>a clean hand-checked yardstick</td><td><b class="active">yes</b>, optional</td></tr>
+    </table>
+    <div class="callout"><b>Why MIL works:</b> like a box of 1,000 photos told only "≥1 is a
+      fire-drill photo" — it teaches itself <i>which</i> ones. Hand it ~1,000 tiles + the word
+      "active," and the tiles it leans on <b>become the map</b>. No per-tile labelling, ever.</div>
+  </section>
+
+  <!-- ===== 13. THE DATASET ===== -->
+  <section class="slide">
+    <div class="kicker">The Data · IBDColEpi</div>
+    <h2>140 colon-biopsy slides, pre-cut into 6,322 H&amp;E tiles</h2>
+    <p><b>IBDColEpi</b> (NTNU / St.&nbsp;Olavs, Trondheim) — H&amp;E biopsies of colonic mucosa from
+       IBD patients + healthy controls. We downloaded the <b>pre-tiled HE patch set</b>
+       (8.76&nbsp;GB) — 512px tiles, <i>not</i> the full slides. Labels are <b>slide-level</b>
+       <b class="active">active</b> / <b class="healed">inactive</b> (the word lives in the WSI
+       filename — Step&nbsp;2 fetches it).</p>
+    <table>
+      <tr><th>Author's split</th><th>Tiles</th><th>Slides</th><th>Role</th></tr>
+      <tr><td>Trainset</td><td>4,973</td><td>104</td><td>training</td></tr>
+      <tr><td>Validationset</td><td>154</td><td>80 <span class="muted">(⊂ train)</span></td><td>random 3% of train <i>tiles</i></td></tr>
+      <tr><td>Testset</td><td>1,195</td><td>36</td><td><b class="healed">held-out slides</b></td></tr>
+      <tr><td><b>Total (distinct)</b></td><td><b>6,322</b></td><td><b>140</b></td><td>104 train + 36 test</td></tr>
+    </table>
+    <div class="callout">
+      ⚠️ <b>Their Train &amp; Val share slides</b> (Val = a random 3% of train <i>tiles</i>), so that
+      boundary <b>leaks</b> for our slide-level task. Only the <b>36&nbsp;Test slides</b> are truly
+      disjoint. → We keep <code>split</code> as provenance but run our <b>own leave-slides-out</b>
+      validation, grouped by <code>slide_id</code>.
+    </div>
+  </section>
+
+  <!-- ===== 14. THE LABELS ===== -->
+  <section class="slide">
+    <div class="kicker">Step 2 · The Labels</div>
+    <h2>Where the label lives — and the 54 / 86 split</h2>
+    <p>The patch files don't carry the label, but the dataset's <b>annotation/WSI filenames</b> do:
+       <code>ID-{id}_HE_{active|inactive}.tiff</code>. We read all 140 cheaply by fetching just the
+       <b>central directory</b> (table-of-contents) at the end of <code>TIFF-annotations.zip</code> —
+       a ~1&nbsp;MB tail-read, not the 1.6&nbsp;GB file — then <b>cross-checked vs Owkin IMILIA</b>
+       (132 slides, <b class="healed">zero disagreements</b>). Committed to <code>metadata/slide_labels.csv</code>.</p>
+    <table>
+      <tr><th>Class</th><th>Slides</th><th>Tiles</th></tr>
+      <tr><td><b class="healed">inactive</b> (healed)</td><td>86</td><td>3,503</td></tr>
+      <tr><td><b class="active">active</b> (inflamed)</td><td>54</td><td>2,819</td></tr>
+      <tr><td><b>total</b></td><td><b>140</b> slides · <b>139</b> patients</td><td><b>6,322</b></td></tr>
+    </table>
+    <p><b>Step 2 output:</b> <code>patch_manifest_labeled.csv</code> — every tile now carries
+       <code>label</code>, <code>slide_target</code> (active=1), and <code>patient_id</code>.</p>
+    <div class="callout">
+      ⚠️ <b><code>slide_target</code> = the SLIDE's label copied onto each tile</b> — a bag label for
+      mean-pool / attention-MIL, <b>not</b> a per-tile truth (an <b class="active">active</b> slide is
+      mostly calm tiles). We group by <code>patient_id</code> so the <code>116</code> re-biopsy can't leak.
+    </div>
+  </section>
+
+  <!-- ===== 14B. THE FOUNDATION MODEL (H-OPTIMUS) ===== -->
+  <section class="slide">
+    <div class="kicker">Step 3 · The Foundation Model</div>
+    <h2>H-optimus-0 — the frozen “brain” we build on</h2>
+    <div class="belt">
+      <span class="step">🔬 one 224-px tile</span><span class="arrow">→</span>
+      <span class="step us">🧠 H-optimus-0<br><span class="muted">frozen ViT · 1.1B params</span></span><span class="arrow">→</span>
+      <span class="step">🔢 1,536-number vector<br><span class="muted">the tile's "fingerprint"</span></span>
+    </div>
+    <ul>
+      <li><b>What it is:</b> a <b>1.1-billion-parameter</b> Vision Transformer, pre-trained by Bioptimus on a
+          huge pile of H&amp;E slides <b>self-supervised</b> (no labels). It already "knows" what tissue, crypts,
+          nuclei and inflammation look like — that knowledge is baked into its weights.</li>
+      <li><b>How we use it: <span class="active">frozen</span>.</b> Each tile goes in, one 1,536-number embedding
+          comes out — pure <b>inference, no training</b>. We never touch its weights. Compute once, cache forever
+          (our 6,322 tiles took ~42 min on the Mac GPU).</li>
+      <li><b>Why that's the whole bet:</b> the expensive pre-training already did the hard visual learning, so we
+          only train <b>tiny heads</b> (logistic regression, attention-MIL) on top. That's why this fits on a laptop.</li>
+      <li><b>Swappable:</b> H-optimus-0 (open, Apache-2.0) today; <code>H0-mini</code> / <code>UNI2</code> /
+          <code>Virchow2</code> drop into the same slot — we'd choose by a probe on held-out <b>IBD</b> slides, not oncology leaderboards.</li>
+    </ul>
+    <div class="callout">🧩 <b>Frozen encoder + light heads = the core architecture decision.</b> Every later upgrade
+      (cell detection, Geboes / Nancy / Robarts scoring) is just <b>another head on these same embeddings</b> — the brain never changes.</div>
+  </section>
+
+  <!-- ===== 15. EMBEDDINGS + SIGNAL CHECK ===== -->
+  <section class="slide">
+    <div class="kicker">Steps 3–4 · Embeddings + Signal Check</div>
+    <h2>Embeddings computed → the signal is real (<b class="active">AUROC 0.98</b>)</h2>
+    <ul>
+      <li><b>Step 3 — embeddings.</b> Frozen <b>H-optimus-0</b> (1.1B-param ViT) ran every tile through itself on the <b>Mac GPU (MPS)</b> → a 1,536-number vector per tile, L2-normalized, cached to <code>artifacts/embeddings/</code>. 6,322 tiles, ~42&nbsp;min, <b>once</b>. Encoder never trained.</li>
+      <li><b>Step 4 — baseline.</b> Mean-pool each slide's embeddings → logistic regression, <b>leave-patients-out</b>: <b class="active">AUROC 0.984</b>, κ&nbsp;0.87, accuracy 94% (per-fold all ≥0.96).</li>
+    </ul>
+    <div class="callout">
+      <b>We didn't trust 0.98 blindly:</b> shuffling the labels collapses AUROC to <b>0.52</b> (no leak);
+      tile-count alone explains only <b>0.66</b>; the best single embedding dimension already hits
+      <b>0.87</b> → the active/healed signal is genuinely, richly encoded in the frozen features.
+    </div>
+    <p class="muted">This is <i>whether</i> a slide is active (slide-level). The <i>where</i> — the heatmap — is Step 5 (attention-MIL).</p>
+  </section>
+
+  <!-- ===== 16. EVIDENCE — SEPARATION ===== -->
+  <section class="slide media">
+    <div class="kicker">Step 4 · Evidence</div>
+    <h2>The baseline separates active vs healed — cleanly, and leak-free</h2>
+    <figure>
+      <img class="shot" src="images/baseline_evidence.png" alt="PCA, score histogram, ROC of the baseline">
+      <figcaption>Slide-mean embeddings — PCA · out-of-fold P(active) by class · ROC.</figcaption>
+    </figure>
+    <p><b>Left:</b> active (red) and inactive (green) form two clouds. <b>Middle:</b> predictions are
+       <b>bimodal</b> — inactive pile at 0, active pile at 1 (not squeaking by). <b>Right:</b> AUROC 0.984.
+       Shuffling labels collapses it to <b>0.52</b> → no leakage.</p>
+  </section>
+
+  <!-- ===== 17. FOCAL DISEASE, SHOWN ===== -->
+  <section class="slide media">
+    <div class="kicker">Why MIL · Focal Disease</div>
+    <h2>A small inflamed focus among normal tissue</h2>
+    <figure>
+      <img class="shot" src="images/focal_17HE.png" alt="17_HE heatmap with inflamed vs normal tiles">
+      <figcaption>Slide <code>17_HE</code> (labeled <b class="active">active</b>): per-tile P(active) heatmap + its hottest vs coolest tiles.</figcaption>
+    </figure>
+    <p>One <b class="active">hot focus</b> in mostly-<b class="healed">normal</b> mucosa. The hot tiles are
+       dense &amp; disordered; the cool tiles are orderly crypt rings. The mean-pool baseline <b>missed</b> this
+       slide (averaged the focus away). Attention-MIL was <i>meant</i> to catch exactly this — but honestly it
+       <b>doesn't yet</b>: <code>17_HE</code> stays missed by MIL too (see the “disease is a spectrum” slide). Genuinely focal disease is
+       the hard, open case.</p>
+  </section>
+
+  <!-- ===== 18. DISAGREEMENTS / FAILURE MODES ===== -->
+  <section class="slide media">
+    <div class="kicker">Honest Validation · Failure Modes</div>
+    <h2>Where the model disagrees with the pathologist (9 / 140)</h2>
+    <figure>
+      <img class="shot" src="images/errors_grid.png" alt="The 9 misclassified slides">
+      <figcaption>The 9 out-of-fold disagreements, reconstructed from their tiles.</figcaption>
+    </figure>
+    <p><b>3 active→called inactive</b> = genuinely focal disease (the hard cases — attention-MIL doesn't fully
+       fix these either; see the spectrum slide). <b>6 inactive→called active</b> = dense/chronic tissue or tiny biopsies,
+       where "abnormal" ≠ "neutrophils." A full clickable review of all 140 (thumbnail → per-tile zoom) lives at
+       <code>artifacts/review/index.html</code>.</p>
+  </section>
+
+  <!-- ===== 19. ATTENTION-MIL EXPLAINED ===== -->
+  <section class="slide">
+    <div class="kicker">Step 5 · Attention-MIL</div>
+    <h2>Let the model find the guilty tiles</h2>
+    <div class="belt">
+      <span class="step">🧺 Bag of tiles<br><span class="muted">+ one slide label</span></span><span class="arrow">→</span>
+      <span class="step us">⚖️ Attention aᵢ<br><span class="muted">weight per tile</span></span><span class="arrow">→</span>
+      <span class="step us">➕ Weighted pool<br><span class="muted">z = Σ aᵢ·tileᵢ</span></span><span class="arrow">→</span>
+      <span class="step us">🎓 Classify z<br><span class="muted">P(active)</span></span><span class="arrow">→</span>
+      <span class="step">🗺️ aᵢ = heatmap</span>
+    </div>
+    <ul>
+      <li>Each slide is a <b>bag</b> of its tile embeddings + <b>one</b> label — no per-tile labels.</li>
+      <li>A tiny network learns an <b>attention weight aᵢ</b> for each tile (how much it counts; the weights sum to 1), pools the tiles into one slide vector by <b>weighted average</b>, then classifies it.</li>
+      <li>Trained on <b>slide labels only</b> — but to call an <b class="active">active</b> slide active it <i>must</i> put weight on the inflamed tiles. So the learned attention <b>is the heatmap</b> (the <i>where</i>), for free.</li>
+      <li><b>vs the alternatives:</b> mean-pool weights every tile equally (dilutes the focus — it missed <code>17_HE</code>); max-pool uses only the single top tile (brittle — fooled by one benign dense tile). Attention is the learned middle.</li>
+    </ul>
+    <div class="callout">⚠️ <b>The <code>132_HE</code> test:</b> max-pool would fixate on one dense-but-benign tile (lymphoid, muscle). Does <i>gated</i> attention avoid that trap? We check it on the next slide — validated <b>leave-patients-out</b> vs the 0.98 baseline.</div>
+  </section>
+
+  <!-- ===== 20. ATTENTION-MIL RESULT — THE HEATMAP IS REAL ===== -->
+  <section class="slide media">
+    <div class="kicker">Step 5 · Result</div>
+    <h2>The heatmap is real — and it points at the inflammation</h2>
+    <figure>
+      <img class="shot" src="images/mil_active_vs_calm.png" alt="Side-by-side attention heatmaps: an active slide with one red hot-spot vs a calm slide with none">
+      <figcaption><b>Colour = how hard the model looked at each tile</b> (legend at right; tile's attention vs its
+        <i>fair share</i> 1/N, on a fixed scale so both panels are comparable). Attention is from the fold model
+        that <b>never saw that slide</b>. <b class="active">137_HE</b> has one red hot-spot → called inflamed;
+        <b class="healed">144_HE</b> has none → called calm.</figcaption>
+    </figure>
+    <ul>
+      <li><b>The score does <i>not</i> improve — that's the honest result.</b> Leave-patients-out <b class="active">AUROC 0.976</b>, a hair <i>below</i> the baseline's 0.984 (96% agreement). MIL's entire value is the <b>heatmap</b>, not a better number.</li>
+      <li><b class="active">137_HE</b> (inflamed): attention concentrates on the most blatant region — <b>91%</b> on 3 tiles, hottest <b>38×</b> its fair share. ⚠️ Attention marks the model's <i>evidence</i>, not the disease's full extent (this slide is ~72% inflamed — see the spectrum slide).</li>
+      <li><b class="healed">144_HE</b> (clean inactive): no tile stands out (hottest 2× fair share) → pale everywhere, P≈0. <b>One hot-spot vs none</b> is the call.</li>
+      <li><b>The <code>132_HE</code> trap held:</b> gated attention <b>spread out</b> (max 3× fair share) instead of fixating on the benign dense tile that fooled the naive linear localizer (0.81). Correctly P≈0. ✓</li>
+    </ul>
+  </section>
+
+  <!-- ===== 21. ZOOM ON THE FOCUS ===== -->
+  <section class="slide media">
+    <div class="kicker">Step 5 · What attention found</div>
+    <h2>Zoom on the hottest tiles — what attention actually picked</h2>
+    <figure>
+      <img class="shot" src="images/mil_137_hottest_tiles.png" alt="The three highest-attention tiles of 137_HE">
+      <figcaption>The 3 tiles the model weighted most, left → right (<b>38× · 4× · 1×</b> fair share).</figcaption>
+    </figure>
+    <p><b>#1 (38×):</b> a dense inflammatory infiltrate at a <b class="active">denuded / eroded</b> mucosal surface —
+       the look of active disease. <b>#2 (4×):</b> crypts ringed by inflammation. <b>#3 (1× = ignored):</b>
+       comparatively <b class="healed">orderly</b> crypts. Nobody told the model which tiles to read — trained on the
+       <b>slide</b> label alone, it learned to put its weight exactly where the disease is.</p>
+    <div class="callout">
+      🔭 <b>This is the v1 deliverable:</b> a per-tile <b class="active">inflamed</b>-vs-<b class="healed">healed</b>
+      map on the slide, validated leave-patients-out. <b>Next — Step 6:</b> lock the honest validation numbers across all 140 slides.
+    </div>
+  </section>
+
+  <!-- ===== 22. DISEASE IS A SPECTRUM + THE HONEST LIMIT ===== -->
+  <section class="slide media">
+    <div class="kicker">Step 5 · Extent &amp; honest limits</div>
+    <h2>Disease isn't all-or-nothing — and the focal end is where it's hardest</h2>
+    <figure>
+      <img class="shot" src="images/disease_spectrum.png" alt="Four slides on one scale — focal, patchy, diffuse, calm — coloured by how inflamed each tile looks">
+      <figcaption>Coloured by <b>how inflamed each tile looks</b> (per-tile P(inflamed), one shared scale) — disease
+        <i>extent</i>, the complement to the attention map's <i>where-it-looked</i>. Focal → patchy → diffuse → calm.</figcaption>
+    </figure>
+    <ul>
+      <li><b>Most active slides are broadly inflamed.</b> Median active slide ≈ <b>82%</b> inflamed tiles; <code>142_HE</code> is <b>100%</b> (diffuse). These are <b>easy</b> — both heads nail them.</li>
+      <li><b class="active">Focal</b> disease (<code>17_HE</code>, ~11% inflamed) is <b>rare and hard</b>, and here's the honest catch: <b>both</b> the baseline <b>and</b> attention-MIL <b>miss it</b>. In fact MIL misses <b>more</b> active slides than the baseline (6 vs 3). It adds the map — it does <b>not</b> rescue the focal cases.</li>
+      <li><b>Two maps, two questions.</b> <i>Attention</i> = where the model focused to decide (the attention-heatmap slide). <i>Per-tile P</i> = how inflamed each tile looks (here). For grading disease <i>extent</i> later (Nancy / Robarts), the extent map is the relevant one.</li>
+    </ul>
+    <div class="callout">⚠️ <b>Bottom line for v1:</b> we deliver a real, leak-free <b class="active">inflamed</b>-vs-<b class="healed">healed</b>
+      map and an honest AUROC — <b>not</b> a solver for the hardest focal cases. That's a named, open problem for later (more data, or a per-tile-supervised head).</div>
+  </section>
+
+  <!-- ===== 23. SUMMARY + WHAT'S NEXT ===== -->
+  <section class="slide">
+    <div class="kicker">v1 · Summary &amp; next</div>
+    <h2>Where v1 landed — the honest one-slide recap</h2>
+    <div class="cards">
+      <div class="card">
+        <h3><span class="ico">🧱</span> What we built</h3>
+        <p>One <b>frozen</b> pathology model (H-optimus-0) → tile embeddings → two <b>light heads</b>. No encoder
+           training. Steps 1–5: manifest → labels → embed → baseline → attention-MIL, each with tests.</p>
+      </div>
+      <div class="card">
+        <h3><span class="ico">📊</span> The numbers <span class="who">leave-patients-out</span></h3>
+        <p>Baseline mean-pool: <b class="active">AUROC 0.984</b>. Attention-MIL: <b class="active">0.976</b>
+           (no better). Always <b>grouped by patient</b>; shuffling labels → 0.52 → no leakage.</p>
+      </div>
+      <div class="card">
+        <h3><span class="ico">🗺️</span> The deliverable</h3>
+        <p>A per-tile <b class="active">inflamed</b>-vs-<b class="healed">healed</b> <b>heatmap</b> on the slide —
+           the model's evidence localized, learned from <b>slide labels only</b> (zero per-tile annotation).</p>
+      </div>
+      <div class="card">
+        <h3><span class="ico">⚠️</span> What we did NOT solve</h3>
+        <p><b>Focal disease</b> (<code>17_HE</code>, <code>105_HE</code>) is missed by both heads — MIL misses
+           <b>more</b> (6 vs 3). "Abnormal ≠ neutrophils" false positives remain; cell-level confirmation is deferred.</p>
+      </div>
+    </div>
+    <div class="callout"><b>→ Next — Step 6:</b> lock the honest validation (CI, sensitivity/specificity, confusion,
+      head-vs-head agreement). <b>Then (deferred):</b> cell/neutrophil detection, stain norm, Geboes / Nancy /
+      Robarts scoring — all reuse these <b>same</b> frozen embeddings. The foundation doesn't change; we add heads.</div>
+  </section>
+
+  <!-- ===== 24. REFERENCES & CREDITS ===== -->
+  <section class="slide">
+    <div class="kicker">References &amp; Credits</div>
+    <h2>Data, model &amp; tools</h2>
+    <ul>
+      <li><b>Dataset — IBDColEpi</b> (CC0, public domain): Pettersen et al. (2021), <i>Code-Free Development and
+          Deployment of Deep Segmentation Models for Digital Pathology</i>, Front. Med. 8:816281; data
+          <code>doi:10.18710/TLA01U</code> (DataverseNO). H&amp;E subset + slide-level labels only.</li>
+      <li><b>Foundation model — H-optimus-0</b> (Bioptimus, 2024; Apache-2.0), used <b>frozen</b> via <code>timm</code>.</li>
+      <li><b>Method — attention-MIL</b>: Ilse, Tomczak &amp; Welling (2018), <i>Attention-based Deep Multiple
+          Instance Learning</i>, ICML. Related: CLAM (Lu et al., 2021).</li>
+      <li><b>Libraries</b>: PyTorch · timm · scikit-learn · NumPy · pandas · Matplotlib · Pillow.
+          <b>Reference impl (sanity-check)</b>: Owkin <b>IMILIA</b>. <b>Recommended WSI tools</b> (not used in v1):
+          TRIDENT · OpenSlide · QuPath.</li>
+      <li><b>Teaching H&amp;E images</b> (cryptitis / crypt-abscess): Wikimedia Commons, CC-BY-SA, by <i>Nephron</i>.
+          All <b>result</b> figures use real IBDColEpi tiles.</li>
+    </ul>
+    <div class="callout">📄 Full citations with DOIs and links: <code>REFERENCES.md</code> in the repo.</div>
+  </section>
+
+</div>
+
+<div id="count"></div>
+<div id="nav">
+  <button class="btn" id="prev" title="Previous (←)">‹</button>
+  <button class="btn" id="next" title="Next (→)">›</button>
+</div>
+<div id="bar"><div id="fill"></div></div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  let i=0;
+  function show(n){
+    i=(n+slides.length)%slides.length;
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    document.getElementById('count').textContent=(i+1)+' / '+slides.length;
+    document.getElementById('fill').style.width=((i+1)/slides.length*100)+'%';
+    location.hash=i+1;
+  }
+  document.getElementById('next').onclick=()=>show(i+1);
+  document.getElementById('prev').onclick=()=>show(i-1);
+  addEventListener('keydown',e=>{
+    if(['ArrowRight',' ','PageDown'].includes(e.key)){show(i+1);e.preventDefault();}
+    else if(['ArrowLeft','PageUp'].includes(e.key)){show(i-1);e.preventDefault();}
+    else if(e.key==='Home'){show(0);} else if(e.key==='End'){show(slides.length-1);}
+  });
+  const start=parseInt(location.hash.replace('#',''))||1;
+  show(start-1);
+</script>
+</body>
+</html>
