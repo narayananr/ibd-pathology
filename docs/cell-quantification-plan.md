@@ -3,6 +3,10 @@
 > **Status: planning only.** This crosses into the project's **deferred** scope (cell/compartment
 > segmentation). Nothing here is built yet. The plan deliberately scopes the *smallest useful slice*, not
 > the full Geboes/Nancy/Robarts pipeline — consistent with "build the smallest useful first slice".
+>
+> **Part of:** the master plan [`segmentation-and-cell-typing-plan.md`](segmentation-and-cell-typing-plan.md)
+> — this doc is **Component B** (cell detection + typing); Component A (compartment segmentation) and the join
+> are covered there.
 
 ## Goal of the first slice
 

@@ -47,8 +47,10 @@ model; trusting the numbers needs some cell/index ground truth.
 **First slice idea:** run CellViT on the `137_HE` active focus, count intraepithelial neutrophils, and
 overlay the detections on the tile.
 
-➡️ **Detailed first-slice plan:** [`docs/cell-quantification-plan.md`](docs/cell-quantification-plan.md)
-(scope, the two feasibility gates — resolution & neutrophil specificity — steps, deliverables, risks).
+➡️ **Detailed plans:** [`docs/segmentation-and-cell-typing-plan.md`](docs/segmentation-and-cell-typing-plan.md)
+(master — compartment **segmentation** + **cell typing** + the join) and
+[`docs/cell-quantification-plan.md`](docs/cell-quantification-plan.md) (cell-typing deep-dive: the two
+feasibility gates — resolution & neutrophil specificity).
 
 ### 2. Stain normalization
 

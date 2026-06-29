@@ -727,6 +727,24 @@ frozen embeddings, per the core architecture decision.
 
 ---
 
+## Slide 23B — Planned next: segmentation + cell typing (deferred)
+
+A "what's next" slide — **not built** (deferred scope), shown so the planned chapter is visible. The upgrade
+turns the per-tile black-box score into a **typed cell map**:
+- **A — epithelium segmentation** as a light head on the **frozen H-optimus patch tokens** (16×16×1,536 per
+  tile → light decoder → 224² mask). The dataset's `Labels_tif` masks are ground truth → **Dice,
+  leave-patients-out**, vs a U-Net baseline. Region-level → rides the frozen FM (on-brand).
+- **B — cell detection + typing** with a **dedicated** model (CellViT/HoVer-Net). Two honest gates:
+  **resolution** (cell models want 40×; our 512-px patches are ~1–2 µm/px) and **neutrophil specificity**
+  (PanNuke lumps "inflammatory"; neutrophils need a MoNuSAC-trained model). Instance detection is too fine
+  for 14-px patch tokens, so B is *not* a light head on H-optimus — the pipeline is intentionally asymmetric.
+- **Join** (cell ∩ compartment) → per-tile status (cryptitis/abscess/…) → Geboes/Nancy/Robarts roll-up.
+
+First slice = `137_HE` active focus vs `144_HE` control. Detail: `docs/segmentation-and-cell-typing-plan.md`
+(master) + `docs/cell-quantification-plan.md` (cell-typing deep-dive). **Planning only — confirm scope before building.**
+
+---
+
 ## Slide 24 — References & credits
 
 A compact credits slide (full version in **`REFERENCES.md`** at the repo root). Covers: the **IBDColEpi**

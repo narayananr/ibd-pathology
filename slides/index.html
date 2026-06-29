@@ -615,6 +615,30 @@
       Robarts scoring — all reuse these <b>same</b> frozen embeddings. The foundation doesn't change; we add heads.</div>
   </section>
 
+  <!-- ===== 23B. PLANNED NEXT — SEGMENTATION + CELL TYPING ===== -->
+  <section class="slide">
+    <div class="kicker">Roadmap · Planned (deferred scope)</div>
+    <h2>Next: a typed cell map per tile — segment compartments, infer cell types</h2>
+    <div class="belt">
+      <span class="step">🔬 tile</span><span class="arrow">→</span>
+      <span class="step us">🗺️ A · epithelium seg<br><span class="muted">frozen FM + light decoder</span></span>
+      <span class="step us">🔵 B · cell detect + type<br><span class="muted">CellViT / HoVer-Net</span></span><span class="arrow">→</span>
+      <span class="step">🔗 join: cell ∩ compartment</span><span class="arrow">→</span>
+      <span class="step">📊 status → Geboes / Nancy / Robarts</span>
+    </div>
+    <ul>
+      <li><b>Why:</b> turn the black-box heatmap into <b>interpretable, index-aligned</b> numbers — a
+          <b class="active">neutrophil inside the epithelium</b> = cryptitis; one filling a crypt lumen = abscess.</li>
+      <li><b>A — segmentation (has ground truth ✅):</b> the dataset ships pixel-level <b>epithelium masks</b>, so this
+          rides the <b>frozen model</b> (patch tokens → light decoder → mask), validated leave-patients-out (Dice) vs a U-Net.</li>
+      <li><b>B — cell typing (no ground truth ⚠️):</b> a dedicated model, with two honest gates — <b>resolution</b>
+          (cell models want 40×; our patches are coarser) and <b>neutrophil specificity</b> (PanNuke lumps "inflammatory"; neutrophils need MoNuSAC).</li>
+      <li><b>Honest:</b> instance cell-detection is too fine for the frozen FM's 14-px patches, so B is its own model — the pipeline is intentionally asymmetric.</li>
+    </ul>
+    <div class="callout">📋 <b>Planning only</b> (deferred scope) — first slice = <code>137_HE</code> active focus vs
+      <code>144_HE</code> control. Plans: <code>docs/segmentation-and-cell-typing-plan.md</code> · <code>docs/cell-quantification-plan.md</code> · <code>ROADMAP.md</code>.</div>
+  </section>
+
   <!-- ===== 24. REFERENCES & CREDITS ===== -->
   <section class="slide">
     <div class="kicker">References &amp; Credits</div>

@@ -187,10 +187,11 @@ Open either in a browser; navigate with arrow keys / space.
 
 ## Roadmap
 
-v1 (Steps 1–6) is complete. Planned next steps — each a new head on the **same** frozen embeddings — are in
-**[`ROADMAP.md`](ROADMAP.md)**. The strongest is **cell-level quantification** (cell type & inflammation
-status per tile, toward Geboes / Nancy / Robarts); a concrete first-slice plan with the feasibility gates is
-in **[`docs/cell-quantification-plan.md`](docs/cell-quantification-plan.md)**.
+v1 (Steps 1–6) is complete. Planned next steps are in **[`ROADMAP.md`](ROADMAP.md)**. The strongest is a
+**typed cell map per tile** — compartment **segmentation** + **cell typing**, toward Geboes / Nancy / Robarts.
+Concrete plans: **[`docs/segmentation-and-cell-typing-plan.md`](docs/segmentation-and-cell-typing-plan.md)**
+(master) and **[`docs/cell-quantification-plan.md`](docs/cell-quantification-plan.md)** (cell-typing deep-dive,
+with the resolution & neutrophil-specificity gates).
 
 ## References & citation
 
