@@ -225,6 +225,44 @@ epithelium" at two stages — the exact thing our classes hinge on.
 
 ---
 
+## Slides 8A–8C — How to read the histology (annotated + zoom) — added 2026-06-30
+
+A self-contained **"learn to read the slide"** mini-section, six slides, kicker
+*"How to read the histology · N / 3"*. Each of the three states (normal → cryptitis → crypt
+abscess) gets a **labelled overview** then a **zoom** that names the actual cells. Built with
+matplotlib leader-line callouts over the same Wikimedia/Nephron H&E images; colour code is
+consistent across all six: **green = epithelium**, **red = active / neutrophil**,
+**blue = lamina propria**, **purple = goblet**, **grey = other / structural**.
+
+**Why it exists.** Before trusting a model that calls tissue "active", you should be able to
+read the feature yourself. The section teaches the eye the exact cue the labels hinge on — a
+neutrophil's multi-lobed nucleus crowding the epithelium — by walking from the calm baseline
+to the loudest active lesion.
+
+- **8A — Normal mucosa, your baseline** (`histo_normal_annotated.png`): orderly crypts, pale
+  goblet cells, a quiet lamina propria with no neutrophils. The "healed" template.
+- **8A-ZOOM — into a single crypt** (`histo_normal_zoom_annotated.png`): crypt = one gland;
+  tidy basal epithelial nuclei; abundant goblet vacuoles; lumen; only a few lymphocytes /
+  plasma cells in the lamina propria; muscularis mucosae band.
+- **8B — Cryptitis** (`histo_cryptitis_annotated.png`): dense infiltrate, neutrophils invading
+  the crypt wall (= the definition of active), depleted goblets, eroded surface.
+- **8B-ZOOM — the inflamed pattern** (`histo_cryptitis_zoom_annotated.png`): the *pattern*-level
+  read — a carpet of small dark nuclei (vs a few dots in normal), depleted goblets, leaked red
+  blood cells (bright salmon, no nucleus), and small dark cells crowding the epithelium. The
+  source is soft, so we deliberately **do not pinpoint one neutrophil here** — that's the next
+  slide's job.
+- **8C — Crypt abscess** (`histo_abscess_annotated.png`): lumen full of neutrophils = abscess;
+  neutrophil vs lymphocyte/plasma cell contrast; gland wall = epithelium.
+- **8C-ZOOM — meet a neutrophil** (`histo_abscess_zoom_annotated.png`): the crisp,
+  cell-resolving image — a single **neutrophil with a multi-lobed (segmented) nucleus**, the
+  lumen packed with them (= crypt abscess), the epithelial gland wall ringing it, and a salmon
+  **red blood cell (no nucleus)** as the classic look-alike not to miscount.
+
+**Figure source:** `scripts/make_histology_zoom_figs.py` regenerates the two zoom figures from
+the source jpgs (crop boxes are hard-coded for reproducibility).
+
+---
+
 ## Slide 9 — The Insight That Shapes Everything
 
 **What it is:** how focal disease dictates our modeling choice.
