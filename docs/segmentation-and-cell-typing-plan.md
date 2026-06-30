@@ -27,6 +27,13 @@ The clinically meaningful signal is the **combination**: a *neutrophil inside th
 
 ## Component A — compartment (epithelium) segmentation  ✅ has ground truth
 
+> **✅ First slice DONE (Gate 1 passed).** A per-patch **logistic probe** on the frozen H-optimus patch
+> tokens, patient-split on 12 slides → **held-out patch-level AUROC 0.995**, **Dice 0.846** on
+> epithelium-containing tiles (per-tile 0.86–0.93). Works on the existing 512-px patches — no re-tiling
+> needed for segmentation. Boundaries are 16×16-blocky → a **conv decoder** is the next refinement.
+> Code: `src/ibdpath/epithelium.py` + `scripts/exp_epithelium_seg.py`; figure `epithelium_seg_demo.png`;
+> deck Slide 23C.
+
 The dataset ships pixel-level **epithelium masks** (`Labels_tif`) aligned to each tile — real labels to train
 **and** validate on. (For tiles we already have, we can just *read* the mask; we train a model only to predict
 masks on **new/unannotated** tissue, which is the actual task and the dataset's intended use.)

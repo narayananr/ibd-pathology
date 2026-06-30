@@ -16,10 +16,14 @@ report.
 Each is a **new head on the SAME frozen embeddings / cached tiles** — the foundation model never changes.
 Per the project guardrails these cross into **deferred scope**: confirm before building.
 
-### 1. Cell-level quantification — cell type & inflammation status per tile ⟵ strongest next step
+### 1. Cell-level quantification — cell type & inflammation status per tile ⟵ in progress
 
 Turns the current black-box per-tile score into **interpretable, countable, clinically-aligned** features
 (what the Geboes / Nancy / Robarts indices actually grade).
+
+> **▶ Started (deferred / experimental):** Component A — **epithelium segmentation** — demoed as a light head
+> on frozen H-optimus patch tokens: held-out **Dice 0.85**, patch **AUROC 0.995** (Gate 1 passed). See deck
+> Slide 23C, `scripts/exp_epithelium_seg.py`, `src/ibdpath/epithelium.py`. Next: conv decoder, then Component B.
 
 **Pipeline, per tile:**
 

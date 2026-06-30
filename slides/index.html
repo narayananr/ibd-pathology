@@ -639,6 +639,28 @@
       <code>144_HE</code> control. Plans: <code>docs/segmentation-and-cell-typing-plan.md</code> · <code>docs/cell-quantification-plan.md</code> · <code>ROADMAP.md</code>.</div>
   </section>
 
+  <!-- ===== 23C. SEGMENTATION — FIRST RESULT ===== -->
+  <section class="slide media">
+    <div class="kicker">Deferred work · started · Segmentation</div>
+    <h2>First result: epithelium segments cleanly — <b class="active">Dice 0.85</b> on held-out patients</h2>
+    <figure>
+      <img class="shot" src="images/epithelium_seg_demo.png" alt="Epithelium segmentation: H&amp;E, ground truth, predicted">
+      <figcaption>Per-patch logistic probe on frozen H-optimus <b>patch tokens</b> (16×16), no encoder training.
+        H&amp;E → ground-truth mask → predicted, on held-out patients.</figcaption>
+    </figure>
+    <ul>
+      <li><b>On-brand:</b> segmentation is just another <b>light head on the frozen model</b> — patch tokens →
+          per-patch P(epithelium) → upsample → mask. Ground truth = the dataset's epithelium masks.</li>
+      <li><b>Held-out patients:</b> patch-level <b class="active">AUROC 0.995</b>, <b class="active">Dice 0.85</b>
+          on epithelium-containing tiles (per-tile 0.86–0.93).</li>
+      <li><b>Honest:</b> the blocky boundaries are the 16×16 patch resolution — a <b>conv decoder</b> (or higher-res
+          tiles) is the refinement. The all-tiles Dice 0.77 is inflated by empty tiles; we headline the epithelium-tile number.</li>
+      <li>This is the <b>compartment layer</b> for cell-typing — it cleanly separates epithelium from the inflammatory lamina propria.</li>
+    </ul>
+    <div class="callout">🧪 <b>Experimental</b> (deferred scope) — <code>scripts/exp_epithelium_seg.py</code> +
+      <code>src/ibdpath/epithelium.py</code> (+4 tests). Next: conv decoder, then wire into cell-typing.</div>
+  </section>
+
   <!-- ===== 24. REFERENCES & CREDITS ===== -->
   <section class="slide">
     <div class="kicker">References &amp; Credits</div>

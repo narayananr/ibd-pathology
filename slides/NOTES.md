@@ -745,6 +745,27 @@ First slice = `137_HE` active focus vs `144_HE` control. Detail: `docs/segmentat
 
 ---
 
+## Slide 23C — Segmentation, first result (Component A, started)
+
+The first build of the deferred segmentation work — **Gate 1 passed**. Epithelium segmentation as a *light
+head on the frozen model*: tile → H-optimus `forward_features` → **256 patch tokens** (16×16×1,536) → a
+per-patch **logistic probe** → P(epithelium) → upsample 16×16 → 512 → mask. No encoder training.
+
+- **Held-out patients** (4 patients, 179 tiles; 12 slides total, patient split): patch-level **AUROC 0.995**,
+  **Dice 0.846** on epithelium-containing tiles (per-tile examples 0.86–0.93).
+- **Honesty:** the all-tiles Dice **0.771** is *inflated* — 21 empty-mask tiles score Dice 1.0 trivially; we
+  headline the epithelium-tile number (0.846). Boundaries are blocky because the probe predicts at 16×16
+  patch resolution → a **conv decoder** (or higher-res tiles) is the refinement.
+- **Why it matters:** this is the **compartment layer** for cell-typing — it cleanly separates epithelium from
+  the inflammatory lamina propria (visible in the active-focus overlay), which is what "intraepithelial
+  neutrophil" needs.
+
+Code: `src/ibdpath/epithelium.py` (mask loader + overlay, 4 tests) + `scripts/exp_epithelium_seg.py`
+(experimental). Figure: `epithelium_seg_demo.png`. Still **deferred / experimental**; next = conv decoder,
+then Component B (cell typing) + the join.
+
+---
+
 ## Slide 24 — References & credits
 
 A compact credits slide (full version in **`REFERENCES.md`** at the repo root). Covers: the **IBDColEpi**
